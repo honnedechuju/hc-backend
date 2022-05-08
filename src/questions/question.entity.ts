@@ -30,10 +30,10 @@ export class Question {
   problems: string[];
 
   @Column('text', { array: true })
-  answers: string[];
+  solutions: string[];
 
   @Column('text', { array: true })
-  explanations: string[];
+  answers: string[];
 
   @Column()
   comment: string;

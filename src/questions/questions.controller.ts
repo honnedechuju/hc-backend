@@ -8,8 +8,6 @@ import {
   Post,
   Query,
   Res,
-  StreamableFile,
-  UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,

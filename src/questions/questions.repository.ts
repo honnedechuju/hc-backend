@@ -50,7 +50,7 @@ export class QuestionsRepository extends Repository<Question> {
     createQuestionDto: CreateQuestionDto,
     user: User,
   ): Promise<Question> {
-    const { title, description, problems, answers } = createQuestionDto;
+    const { title, description, problems, solutions } = createQuestionDto;
     const question = this.create({
       title,
       description,
@@ -58,8 +58,8 @@ export class QuestionsRepository extends Repository<Question> {
       user,
       timestamp: new Date(),
       problems,
-      answers,
-      explanations: [],
+      solutions,
+      answers: [],
       comment: '',
       message: '',
       quantity: 0,

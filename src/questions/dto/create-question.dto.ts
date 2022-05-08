@@ -15,5 +15,5 @@ export class CreateQuestionDto {
   @IsArray()
   @ArrayNotEmpty()
   @IsString({ each: true })
-  answers: string[];
+  solutions: string[];
 }
