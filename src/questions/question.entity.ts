@@ -1,10 +1,12 @@
 import { Exclude } from 'class-transformer';
 import { User } from 'src/auth/user.entity';
+import { Task } from 'src/tasks/task.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { QuestionStatus } from './question-status.enum';
@@ -23,7 +25,11 @@ export class Question {
   @CreateDateColumn()
   timestamp: Date;
 
-  @Column()
+  @Column({
+    type: 'enum',
+    enum: QuestionStatus,
+    default: QuestionStatus.IN_PROGRESS,
+  })
   status: QuestionStatus;
 
   @Column('text', { array: true })
@@ -50,7 +56,10 @@ export class Question {
   @Column()
   reports: string;
 
-  @ManyToOne((_type) => User, (user) => user.questions, { eager: false })
-  @Exclude({ toPlainOnly: true })
+  @OneToOne((_type) => Task, (task) => task.question, { eager: false })
+  task: Task;
+
+  @ManyToOne((_type) => User, (user) => user.questions, { eager: true })
+  @Exclude({ toPlainOnly: false })
   user: User;
 }

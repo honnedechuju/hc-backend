@@ -4,6 +4,9 @@ import { QuestionsModule } from './questions/questions.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { configValidationScheme } from './config.scheme';
+import { TasksModule } from './tasks/tasks.module';
+import { ContractsService } from './contracts/contracts.service';
+import { ContractsModule } from './contracts/contracts.module';
 
 @Module({
   imports: [
@@ -27,8 +30,10 @@ import { configValidationScheme } from './config.scheme';
     }),
     QuestionsModule,
     AuthModule,
+    TasksModule,
+    ContractsModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [ContractsService],
 })
 export class AppModule {}
