@@ -18,7 +18,7 @@ export class QuestionsRepository extends Repository<Question> {
 
     const query = this.createQueryBuilder('question');
 
-    query.where({ user });
+    query.where({ customer: user.customer });
 
     if (status) {
       query.andWhere('question.status = :status', { status });
@@ -55,16 +55,15 @@ export class QuestionsRepository extends Repository<Question> {
       title,
       description,
       status: QuestionStatus.IN_PROGRESS,
-      user,
       timestamp: new Date(),
       problems,
       solutions,
       answers: [],
-      comment: '',
       message: '',
-      quantity: 0,
+      rating: 0,
       request: false,
       reports: '',
+      customer: user.customer,
     });
 
     await this.save(question);

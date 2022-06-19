@@ -1,27 +1,40 @@
 import { Exclude } from 'class-transformer';
-import { User } from '../auth/user.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Question } from 'src/questions/question.entity';
+import { Question } from '../questions/question.entity';
+import { Teacher } from '../auth/teachers/teacher.entity';
+import { TaskStatus } from './task-status.enum';
 
 @Entity()
 export class Task {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @CreateDateColumn()
+  timestamp: Date;
+
+  @Column({ type: 'timestamp' })
+  answeredAt: Date;
+
+  @Column({ type: 'timestamp' })
+  completedAt: Date;
+
+  @Column({
+    type: 'enum',
+    enum: TaskStatus,
+    default: TaskStatus.STARTED,
+  })
   status: string;
 
-  @OneToOne((_type) => Question, (question) => question.task, { eager: true })
-  @Exclude({ toPlainOnly: true })
+  @ManyToOne((_type) => Question, (question) => question.task, { eager: true })
   question: Question;
 
-  @ManyToOne((_type) => User, (user) => user.tasks, { eager: false })
+  @ManyToOne((_type) => Teacher, (teacher) => teacher.tasks, { eager: true })
   @Exclude({ toPlainOnly: true })
-  user: User;
+  teacher: Teacher;
 }

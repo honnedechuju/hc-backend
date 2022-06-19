@@ -22,7 +22,9 @@ export class QuestionsService {
   }
 
   async getQuestionById(id: string, user: User): Promise<Question> {
-    const found = this.questionsRepository.findOne({ where: { id, user } });
+    const found = this.questionsRepository.findOne({
+      where: { id, customer: user.customer },
+    });
 
     if (!found) {
       throw new NotFoundException(`Question with ID "${id}" not found`);
@@ -38,7 +40,10 @@ export class QuestionsService {
   }
 
   async deleteQuestion(id: string, user: User): Promise<void> {
-    const result = await this.questionsRepository.delete({ id, user });
+    const result = await this.questionsRepository.delete({
+      id,
+      customer: user.customer,
+    });
 
     if (result.affected === 0) {
       throw new NotFoundException(`Question with ID "${id}" not found`);

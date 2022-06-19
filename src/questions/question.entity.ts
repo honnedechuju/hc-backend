@@ -1,4 +1,6 @@
 import { Exclude } from 'class-transformer';
+import { Customer } from 'src/auth/customers/customer.entity';
+import { Student } from 'src/auth/customers/students/student.entity';
 import { User } from 'src/auth/user.entity';
 import { Task } from 'src/tasks/task.entity';
 import {
@@ -6,7 +8,7 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
-  OneToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { QuestionStatus } from './question-status.enum';
@@ -42,13 +44,10 @@ export class Question {
   answers: string[];
 
   @Column()
-  comment: string;
-
-  @Column()
   message: string;
 
   @Column()
-  quantity: number;
+  rating: number;
 
   @Column()
   request: boolean;
@@ -56,10 +55,15 @@ export class Question {
   @Column()
   reports: string;
 
-  @OneToOne((_type) => Task, (task) => task.question, { eager: false })
-  task: Task;
+  @OneToMany(() => Task, (task) => task.question, { eager: false })
+  task: Task[];
 
-  @ManyToOne((_type) => User, (user) => user.questions, { eager: true })
+  @ManyToOne(() => Student, (student) => student.questions, {
+    eager: true,
+  })
   @Exclude({ toPlainOnly: false })
-  user: User;
+  student: Student;
+
+  @ManyToOne(() => Customer, (customer) => customer.questions, { eager: false })
+  customer: Customer;
 }

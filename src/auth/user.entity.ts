@@ -1,12 +1,8 @@
 import { Exclude } from 'class-transformer';
-import { isEnum } from 'class-validator';
-import { Question } from 'src/questions/question.entity';
-import { Task } from 'src/tasks/task.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Contract } from '../contracts/contract.entity';
-import { Guardian } from './guardians/guardian.entity';
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Customer } from './customers/customer.entity';
 import { Role } from './role.enum';
-import { Student } from './students/student.entity';
+import { Teacher } from './teachers/teacher.entity';
 
 @Entity()
 export class User {
@@ -19,29 +15,38 @@ export class User {
   @Column()
   password: string;
 
+  @Column()
+  email: string;
+
+  @Column()
+  lineId: string;
+
   @Column({
+    name: 'UserRole',
     type: 'enum',
     enum: Role,
-    default: Role.USER,
+    default: Role.CUSTOMER,
   })
   role: Role;
 
-  @OneToMany((_type) => Question, (question) => question.user, { eager: false })
-  questions: Question[];
-
-  @OneToMany((_type) => Task, (task) => task.user, { eager: false })
-  tasks: Task[];
-
-  @OneToMany((_type) => Contract, (contract) => contract.user, { eager: false })
+  @OneToOne(() => Customer, { eager: true })
   @Exclude({ toPlainOnly: true })
-  contracts: Contract[];
+  customer: Customer;
 
-  @OneToMany((_type) => Guardian, (guardian) => guardian.user, { eager: false })
+  @OneToOne(() => Teacher, { eager: true })
   @Exclude({ toPlainOnly: true })
-  guardians: Guardian[];
+  teacher: Teacher;
 
-  @OneToMany((_type) => Student, (student) => student.contract, {
-    eager: false,
-  })
-  students: Student[];
+  // @OneToMany((_type) => Contract, (contract) => contract.user, { eager: false })
+  // @Exclude({ toPlainOnly: true })
+  // contracts: Contract[];
+
+  // @OneToMany((_type) => Guardian, (guardian) => guardian.user, { eager: false })
+  // @Exclude({ toPlainOnly: true })
+  // : Guardian[];
+
+  // @OneToMany((_type) => Student, (student) => student.contract, {
+  //   eager: false,
+  // })
+  // students: Student[];
 }
