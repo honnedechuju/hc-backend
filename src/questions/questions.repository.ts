@@ -46,6 +46,7 @@ export class QuestionsRepository extends Repository<Question> {
       throw new InternalServerErrorException();
     }
   }
+
   async createQuestion(
     createQuestionDto: CreateQuestionDto,
     user: User,

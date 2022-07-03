@@ -7,12 +7,14 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CustomersModule } from './customers/customers.module';
+import { CustomersService } from '../customers/customers.service';
+import { CustomersRepository } from '../customers/customers.repository';
+import { TeachersRepository } from '../teachers/teachers.repository';
+import { TeachersService } from '../teachers/teachers.service';
 
 @Module({
   imports: [
     ConfigModule,
-    CustomersModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -24,9 +26,13 @@ import { CustomersModule } from './customers/customers.module';
         },
       }),
     }),
-    TypeOrmModule.forFeature([UsersRepository]),
+    TypeOrmModule.forFeature([
+      UsersRepository,
+      CustomersRepository,
+      TeachersRepository,
+    ]),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, CustomersService, TeachersService, JwtStrategy],
   controllers: [AuthController],
   exports: [JwtStrategy, PassportModule],
 })

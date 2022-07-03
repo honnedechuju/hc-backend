@@ -1,7 +1,6 @@
 import { Exclude } from 'class-transformer';
-import { Customer } from 'src/auth/customers/customer.entity';
-import { Student } from 'src/auth/customers/students/student.entity';
-import { User } from 'src/auth/user.entity';
+import { Customer } from 'src/customers/customer.entity';
+import { Student } from 'src/customers/students/student.entity';
 import { Task } from 'src/tasks/task.entity';
 import {
   Column,

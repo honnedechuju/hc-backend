@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Question } from '../questions/question.entity';
-import { Teacher } from '../auth/teachers/teacher.entity';
+import { Teacher } from '../teachers/teacher.entity';
 import { TaskStatus } from './task-status.enum';
 
 @Entity()
@@ -17,6 +17,9 @@ export class Task {
 
   @CreateDateColumn()
   timestamp: Date;
+
+  @Column('text', { array: true })
+  answers: string[];
 
   @Column({ type: 'timestamp' })
   answeredAt: Date;

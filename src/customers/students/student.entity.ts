@@ -2,15 +2,13 @@ import { Question } from 'src/questions/question.entity';
 import {
   Column,
   Entity,
+  ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from '../user.entity';
-import { Student } from './students/student.entity';
-
+import { Customer } from '../customer.entity';
 @Entity()
-export class Customer {
+export class Student {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -27,24 +25,25 @@ export class Customer {
   lastNameKana: string;
 
   @Column()
-  phone: string;
-
-  @Column()
-  postalCode: string;
+  gender: number;
 
   @Column('date')
   birthday: Date;
 
-  @OneToOne(() => User, (user) => user.customer, { eager: false })
-  user: User;
+  @Column()
+  cram: string;
 
-  @OneToMany(() => Student, (student) => student.customer)
-  students: Student[];
+  @Column()
+  school: string;
 
-  @OneToMany(() => Question, (question) => question.customer, {
-    eager: false,
-  })
+  @OneToMany(() => Question, (question) => question.student, { eager: false })
   questions: Question[];
+
+  @ManyToOne(() => Customer, (customer) => customer.students, { eager: true })
+  customer: Customer;
+
+  // @OneToMany((_type) => Question, (question) => question.user, { eager: false })
+  // questions: Question[];
 
   // @OneToMany((_type) => Task, (task) => task.user, { eager: false })
   // tasks: Task[];

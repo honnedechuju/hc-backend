@@ -76,7 +76,7 @@ export class QuestionsController {
     return this.questionsService.updateQuestionStatus(id, status, user);
   }
 
-  @Post('upload')
+  @Post('images')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'problems' }, { name: 'answers' }], {
       dest: './upload',

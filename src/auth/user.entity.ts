@@ -1,8 +1,14 @@
 import { Exclude } from 'class-transformer';
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Customer } from './customers/customer.entity';
-import { Role } from './role.enum';
-import { Teacher } from './teachers/teacher.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Customer } from '../customers/customer.entity';
+import { UserRole } from './user-role.enum';
+import { Teacher } from '../teachers/teacher.entity';
 
 @Entity()
 export class User {
@@ -24,29 +30,22 @@ export class User {
   @Column({
     name: 'UserRole',
     type: 'enum',
-    enum: Role,
-    default: Role.CUSTOMER,
+    enum: UserRole,
+    default: UserRole.CUSTOMER,
   })
-  role: Role;
+  role: UserRole;
 
-  @OneToOne(() => Customer, { eager: true })
+  @OneToOne(() => Customer, (customer) => customer.user, {
+    cascade: true,
+  })
+  @JoinColumn()
   @Exclude({ toPlainOnly: true })
   customer: Customer;
 
-  @OneToOne(() => Teacher, { eager: true })
+  @OneToOne(() => Teacher, (teacher) => teacher.user, {
+    cascade: true,
+  })
+  @JoinColumn()
   @Exclude({ toPlainOnly: true })
   teacher: Teacher;
-
-  // @OneToMany((_type) => Contract, (contract) => contract.user, { eager: false })
-  // @Exclude({ toPlainOnly: true })
-  // contracts: Contract[];
-
-  // @OneToMany((_type) => Guardian, (guardian) => guardian.user, { eager: false })
-  // @Exclude({ toPlainOnly: true })
-  // : Guardian[];
-
-  // @OneToMany((_type) => Student, (student) => student.contract, {
-  //   eager: false,
-  // })
-  // students: Student[];
 }
