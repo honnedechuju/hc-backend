@@ -1,5 +1,6 @@
 export enum ContractStatus {
-  SETTLED = 'UNLIMITED',
-  CANCELLED = 'LIMITED',
+  FREETRIAL = 'FREETRIAL',
+  SETTLED = 'SETTLED',
+  CANCELLED = 'CANCELLED',
   EXPIRED = 'EXPIRED',
 }

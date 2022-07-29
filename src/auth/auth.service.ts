@@ -51,7 +51,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    const found = await this.usersRepository.findOne(id);
+    const found = await this.usersRepository.findOne({ id });
 
     if (!found) {
       throw new NotFoundException(`User with ID "${id}" not found`);

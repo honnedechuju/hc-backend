@@ -2,10 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Customer } from '../customer.entity';
+import { Student } from '../students/student.entity';
 import { ContractStatus } from './contract-status.enum';
 import { ContractType } from './contract-type.enum';
 
@@ -14,13 +16,12 @@ export class Contract {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   timestamp: Date;
 
   @Column({
     type: 'enum',
     enum: ContractType,
-    default: ContractType.LIMITED,
   })
   type: ContractType;
 
@@ -31,11 +32,17 @@ export class Contract {
   })
   status: ContractStatus;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamptz', nullable: true })
   lastPaymentTime: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamptz', nullable: true })
   nextPaymentTime: Date;
+
+  @Column()
+  stripeSubscriptionId: string;
+
+  @ManyToMany(() => Student, (student) => student.contracts)
+  students: Student[];
 
   @ManyToOne(() => Customer, (customer) => customer.contracts)
   customer: Customer;

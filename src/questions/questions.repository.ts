@@ -14,7 +14,7 @@ export class QuestionsRepository extends Repository<Question> {
     filterDto: GetQuestionsFilterDto,
     user: User,
   ): Promise<Question[]> {
-    const { status, search } = filterDto;
+    const { status, search, studentId } = filterDto;
 
     const query = this.createQueryBuilder('question');
 
@@ -29,6 +29,10 @@ export class QuestionsRepository extends Repository<Question> {
         '(LOWER(question.title) LIKE LOWER(:search) OR LOWER(question.description) LIKE LOWER(:search))',
         { search: `%${search}%` },
       );
+    }
+
+    if (studentId) {
+      query.andWhere('question.student = :student', { student: studentId });
     }
 
     query.orderBy('timestamp', 'DESC');

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -46,11 +47,19 @@ export class ContractsController {
     @Param('id') id: string,
     @GetUser() user: User,
     @Body() updateContractDto: UpdateContractDto,
-  ): Promise<Contract> {
+  ): Promise<void> {
     return this.contractsService.updateContractById(
       id,
       updateContractDto,
       user,
     );
+  }
+
+  @Delete(':id')
+  async cancelContractById(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<void> {
+    return this.contractsService.cancelContractById(id, user);
   }
 }

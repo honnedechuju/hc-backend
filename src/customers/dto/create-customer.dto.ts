@@ -1,11 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsDate,
-  IsOptional,
-  IsPhoneNumber,
-  IsString,
-  Matches,
-} from 'class-validator';
+import { IsDate, IsPhoneNumber, IsString, Matches } from 'class-validator';
 
 export class CreateCustomerDto {
   @IsString()
@@ -31,8 +25,4 @@ export class CreateCustomerDto {
   @Type(() => Date)
   @IsDate()
   birthday: Date;
-
-  @IsOptional()
-  @IsString()
-  userId: string;
 }

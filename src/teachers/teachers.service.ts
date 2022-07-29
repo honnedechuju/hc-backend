@@ -10,6 +10,7 @@ import { User } from '../auth/user.entity';
 import { TeacherStatus } from './teacher-status.enum';
 import { Teacher } from './teacher.entity';
 import { TeachersRepository } from './teachers.repository';
+import { Equal } from 'typeorm';
 
 @Injectable()
 export class TeachersService {
@@ -27,7 +28,7 @@ export class TeachersService {
   // }
 
   async updateStatus(user: User, status: TeacherStatus): Promise<void> {
-    const result = await this.teachersRepository.update(user.teacher, {
+    const result = await this.teachersRepository.update(user.teacher.id, {
       status,
     });
     if (result.affected !== 1) {
@@ -45,7 +46,12 @@ export class TeachersService {
     if (user.role === UserRole.ADMIN) {
       found = await this.teachersRepository.findOne({ id });
     } else {
-      found = await this.teachersRepository.findOne({ id, user });
+      found = await this.teachersRepository.findOne({
+        where: {
+          id,
+          user: Equal(user),
+        },
+      });
     }
 
     if (!found) {

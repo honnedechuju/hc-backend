@@ -37,7 +37,12 @@ export class Customer {
   @Column('date')
   birthday: Date;
 
-  @OneToOne(() => User, (user) => user.customer, {})
+  @Column({
+    nullable: true,
+  })
+  stripeId: string;
+
+  @OneToOne(() => User, (user) => user.customer, { eager: true })
   @JoinColumn()
   user: User;
 

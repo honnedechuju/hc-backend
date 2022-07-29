@@ -7,7 +7,6 @@ import {
   Post,
   Query,
   Req,
-  SetMetadata,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';

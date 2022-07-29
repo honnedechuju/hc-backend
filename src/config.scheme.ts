@@ -8,4 +8,9 @@ export const configValidationScheme = Joi.object({
   DB_PASSWORD: Joi.string().required(),
   DB_DATABASE: Joi.string().required(),
   JWT_SECRET: Joi.string().required(),
+  STRIPE_API_KEY: Joi.string().required(),
+  STRIPE_API_VERSION: Joi.string().required(),
+  STRIPE_PRICE_ID_LIMITED: Joi.string().required(),
+  STRIPE_PRICE_ID_UNLIMITED: Joi.string().required(),
+  STRIPE_PRICE_ID_TUTOR: Joi.string().required(),
 });

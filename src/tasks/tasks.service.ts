@@ -6,6 +6,8 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './task.entity';
 import { TasksRepository } from './tasks.repository';
 
+import { Equal } from 'typeorm';
+
 @Injectable()
 export class TasksService {
   constructor(
@@ -19,7 +21,7 @@ export class TasksService {
 
   async getTaskById(id: string, user: User) {
     const found = this.tasksRepository.findOne({
-      where: { id, teacher: user.teacher },
+      where: { id, teacher: Equal(user.teacher) },
     });
 
     if (!found) {

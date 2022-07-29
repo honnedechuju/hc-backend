@@ -2,9 +2,11 @@ import { ArrayNotEmpty, IsArray, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateQuestionDto {
   @IsNotEmpty()
+  @IsString()
   title: string;
 
   @IsNotEmpty()
+  @IsString()
   description: string;
 
   @IsArray()
@@ -16,4 +18,8 @@ export class CreateQuestionDto {
   @ArrayNotEmpty()
   @IsString({ each: true })
   solutions: string[];
+
+  @IsString()
+  @IsNotEmpty()
+  studentId: string;
 }

@@ -7,7 +7,7 @@ import { configValidationScheme } from './config.scheme';
 import { TasksModule } from './tasks/tasks.module';
 import { CustomersModule } from './customers/customers.module';
 import { TeachersModule } from './teachers/teachers.module';
-import { ContractsModule } from './customers/contracts/contracts.module';
+import { StudentsModule } from './customers/students/students.module';
 
 @Module({
   imports: [
@@ -33,8 +33,10 @@ import { ContractsModule } from './customers/contracts/contracts.module';
     AuthModule,
     TasksModule,
     CustomersModule,
+    StudentsModule,
     TeachersModule,
   ],
   controllers: [],
+  providers: [],
 })
 export class AppModule {}

@@ -2,10 +2,12 @@ import { Question } from 'src/questions/question.entity';
 import {
   Column,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Contract } from '../contracts/contract.entity';
 import { Customer } from '../customer.entity';
 @Entity()
 export class Student {
@@ -31,33 +33,17 @@ export class Student {
   birthday: Date;
 
   @Column()
-  cram: string;
+  privateSchool: string;
 
   @Column()
-  school: string;
+  publicSchool: string;
 
   @OneToMany(() => Question, (question) => question.student, { eager: false })
   questions: Question[];
 
+  @ManyToMany(() => Contract, (contract) => contract.students, { eager: false })
+  contracts: Contract[];
+
   @ManyToOne(() => Customer, (customer) => customer.students, { eager: true })
   customer: Customer;
-
-  // @OneToMany((_type) => Question, (question) => question.user, { eager: false })
-  // questions: Question[];
-
-  // @OneToMany((_type) => Task, (task) => task.user, { eager: false })
-  // tasks: Task[];
-
-  // @OneToMany((_type) => Contract, (contract) => contract.user, { eager: false })
-  // @Exclude({ toPlainOnly: true })
-  // contracts: Contract[];
-
-  // @OneToMany((_type) => Guardian, (guardian) => guardian.user, { eager: false })
-  // @Exclude({ toPlainOnly: true })
-  // guardians: Guardian[];
-
-  // @OneToMany((_type) => Student, (student) => student.contract, {
-  //   eager: false,
-  // })
-  // students: Student[];
 }

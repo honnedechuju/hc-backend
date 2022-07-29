@@ -6,12 +6,15 @@ import { QuestionsRepository } from './questions.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from './question.entity';
 import { User } from 'src/auth/user.entity';
+import { StudentsService } from 'src/customers/students/students.service';
+import { Equal } from 'typeorm';
 
 @Injectable()
 export class QuestionsService {
   constructor(
     @InjectRepository(QuestionsRepository)
     private questionsRepository: QuestionsRepository,
+    private studentsService: StudentsService,
   ) {}
 
   async getQuestions(
@@ -23,7 +26,7 @@ export class QuestionsService {
 
   async getQuestionById(id: string, user: User): Promise<Question> {
     const found = this.questionsRepository.findOne({
-      where: { id, customer: user.customer },
+      where: { id, customer: Equal(user.customer) },
     });
 
     if (!found) {
@@ -42,7 +45,7 @@ export class QuestionsService {
   async deleteQuestion(id: string, user: User): Promise<void> {
     const result = await this.questionsRepository.delete({
       id,
-      customer: user.customer,
+      customer: Equal(user.customer),
     });
 
     if (result.affected === 0) {

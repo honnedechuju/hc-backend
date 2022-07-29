@@ -25,19 +25,19 @@ export class CustomersController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles([UserRole.ADMIN])
+  @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
   async getCustomer(): Promise<Customer[]> {
     return this.customersService.getCustomer();
   }
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
-  async postCustomer(
+  @Roles([UserRole.CUSTOMER])
+  async createCustomer(
     @Body() createCustomerDto: CreateCustomerDto,
     @GetUser() user: User,
   ): Promise<void> {
-    return this.customersService.createCustomer(createCustomerDto, user);
+    await this.customersService.createCustomer(createCustomerDto, user);
   }
 
   @Get('/:id/')
@@ -57,11 +57,7 @@ export class CustomersController {
     @Param('id') id: string,
     @Body() updateCustomerDto: UpdateCustomerDto,
     @GetUser() user: User,
-  ): Promise<Customer> {
-    return this.customersService.updateCustomerById(
-      id,
-      updateCustomerDto,
-      user,
-    );
+  ): Promise<void> {
+    await this.customersService.updateCustomerById(id, updateCustomerDto, user);
   }
 }
