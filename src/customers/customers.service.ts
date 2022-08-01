@@ -15,6 +15,7 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 import { Connection } from 'typeorm';
+import { CreatePaymentMethodDto } from './contracts/dto/create-payment-method.dto';
 
 @Injectable()
 export class CustomersService {
@@ -35,6 +36,12 @@ export class CustomersService {
       where: {
         user,
       },
+    });
+  }
+
+  async getCustomerFromUser(user: User): Promise<Customer> {
+    return this.customersRepository.findOne({
+      user,
     });
   }
 
@@ -104,5 +111,48 @@ export class CustomersService {
     } catch (error) {
       throw new InternalServerErrorException();
     }
+  }
+
+  async getPaymentMethods(customerId: string, user: User) {
+    const customer = await this.getCustomerById(customerId, user);
+    return this.stripeService.getPaymentMethodsByCustomerId(
+      customer.stripeCustomerId,
+    );
+  }
+
+  async postPaymentMethod(
+    customerId: string,
+    createPaymentMethodDto: CreatePaymentMethodDto,
+    user: User,
+  ) {
+    const { stripePaymentMethodId } = createPaymentMethodDto;
+    const customer = await this.getCustomerById(customerId, user);
+    return this.stripeService.attachPaymentMethodToCustomer(
+      stripePaymentMethodId,
+      customer.stripeCustomerId,
+    );
+  }
+
+  async deletePaymentMethodById(
+    customerId: string,
+    stripePaymentMethodId: string,
+    user: User,
+  ) {
+    const customer = await this.getCustomerById(customerId, user);
+    const paymentMethods =
+      await this.stripeService.getPaymentMethodsByCustomerId(
+        customer.stripeCustomerId,
+      );
+    const paymentMethodIds = paymentMethods.data.map(
+      (paymentMethod) => paymentMethod.id,
+    );
+    if (!paymentMethodIds.includes(stripePaymentMethodId)) {
+      throw new NotFoundException(
+        `PaymentMethod with ID "${stripePaymentMethodId}" not found.`,
+      );
+    }
+    return this.stripeService.detachPaymentMethodFromCustomer(
+      stripePaymentMethodId,
+    );
   }
 }

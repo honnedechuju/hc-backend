@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -13,6 +14,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { UserRole } from 'src/auth/user-role.enum';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/user.entity';
+import { CreatePaymentMethodDto } from './contracts/dto/create-payment-method.dto';
 import { Customer } from './customer.entity';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -60,5 +62,42 @@ export class CustomersController {
   ): Promise<void> {
     delete updateCustomerDto.stripeId;
     await this.customersService.updateCustomerById(id, updateCustomerDto, user);
+  }
+
+  @Get('/:id/payment-methods/')
+  @UseGuards(RolesGuard)
+  @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
+  async getPaymentMethods(@Param('id') id: string, @GetUser() user: User) {
+    return this.customersService.getPaymentMethods(id, user);
+  }
+
+  @Post('/:id/payment-methods/')
+  @UseGuards(RolesGuard)
+  @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
+  async postPaymentMethods(
+    @Param('id') id: string,
+    @Body() createPaymentMethodDto: CreatePaymentMethodDto,
+    @GetUser() user: User,
+  ) {
+    return this.customersService.postPaymentMethod(
+      id,
+      createPaymentMethodDto,
+      user,
+    );
+  }
+
+  @Delete('/:customerId/payment-methods/:paymentMethodId')
+  @UseGuards(RolesGuard)
+  @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
+  async deletePaymentMethods(
+    @Param('customerId') customerId: string,
+    @Param('paymentMethodId') paymentMethodId: string,
+    @GetUser() user: User,
+  ) {
+    return this.customersService.deletePaymentMethodById(
+      customerId,
+      paymentMethodId,
+      user,
+    );
   }
 }

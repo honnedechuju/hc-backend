@@ -120,6 +120,34 @@ export class StripeService {
     return this.stripe.subscriptions.retrieve(id);
   }
 
+  async getPaymentMethodsByCustomerId(stripeCustomerId: string) {
+    return this.stripe.customers.listPaymentMethods(stripeCustomerId, {
+      type: 'card',
+    });
+  }
+
+  async attachPaymentMethodToCustomer(
+    paymentMethodId: string,
+    stripeCustomerId: string,
+  ) {
+    return this.stripe.paymentMethods.attach(paymentMethodId, {
+      customer: stripeCustomerId,
+    });
+  }
+
+  async detachPaymentMethodFromCustomer(paymentMethodId: string) {
+    return this.stripe.paymentMethods.detach(paymentMethodId);
+  }
+
+  async updatePaymentMethodOfSubscription(
+    stripeSubscriptionId: string,
+    paymentMethodId: string,
+  ) {
+    return this.stripe.subscriptions.update(stripeSubscriptionId, {
+      default_payment_method: paymentMethodId,
+    });
+  }
+
   async handleWebhook(request: Request, response: Response) {
     const WEB_HOOK_SECRET =
       'whsec_f86e75168f21fd54e3e1aec0462fd8985e496338618a5b4c1ca8a0a99b22d822';
