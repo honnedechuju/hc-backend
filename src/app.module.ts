@@ -8,6 +8,8 @@ import { TasksModule } from './tasks/tasks.module';
 import { CustomersModule } from './customers/customers.module';
 import { TeachersModule } from './teachers/teachers.module';
 import { StudentsModule } from './customers/students/students.module';
+import { PaymentsModule } from './customers/payments/payments.module';
+import { PaymentsService } from './customers/payments/payments.service';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { StudentsModule } from './customers/students/students.module';
     CustomersModule,
     StudentsModule,
     TeachersModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [],

@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../auth/user.entity';
 import { Contract } from './contracts/contract.entity';
+import { Payment } from './payments/payment.entity';
 import { Student } from './students/student.entity';
 
 @Entity()
@@ -40,11 +41,14 @@ export class Customer {
   @Column({
     nullable: true,
   })
-  stripeId: string;
+  stripeCustomerId: string;
 
-  @OneToOne(() => User, (user) => user.customer, { eager: true })
+  @OneToOne(() => User, (user) => user.customer, { eager: false })
   @JoinColumn()
   user: User;
+
+  @OneToMany(() => Payment, (payment) => payment.customer)
+  payments: Payment[];
 
   @OneToMany(() => Student, (student) => student.customer, { eager: false })
   students: Student[];

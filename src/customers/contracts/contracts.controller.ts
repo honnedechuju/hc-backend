@@ -10,6 +10,9 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/auth/get-user.decorator';
+import { Roles } from 'src/auth/roles.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { UserRole } from 'src/auth/user-role.enum';
 import { User } from 'src/auth/user.entity';
 import { Contract } from './contract.entity';
 import { ContractsService } from './contracts.service';
@@ -22,6 +25,8 @@ export class ContractsController {
   constructor(private contractsService: ContractsService) {}
 
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
   async getContracts(@GetUser() user: User): Promise<Contract[]> {
     return this.contractsService.getContracts(user);
   }
@@ -30,7 +35,7 @@ export class ContractsController {
   async createContract(
     @GetUser() user: User,
     @Body() createContractDto: CreateContractDto,
-  ): Promise<Contract> {
+  ): Promise<void> {
     return this.contractsService.createContract(createContractDto, user);
   }
 

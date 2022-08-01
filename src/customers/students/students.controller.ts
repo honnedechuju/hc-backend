@@ -18,21 +18,21 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 import { Student } from './student.entity';
 import { StudentsService } from './students.service';
 
-@Controller('students')
+@Controller('/customers/:customerId/students')
 @UseGuards(AuthGuard())
 export class StudentsController {
   constructor(private studentsService: StudentsService) {}
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles([UserRole.ADMIN])
+  @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
   async getStudent(@GetUser() user: User): Promise<Student[]> {
     return this.studentsService.getStudents(user);
   }
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles([UserRole.CUSTOMER, UserRole.ADMIN])
+  @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
   async createStudent(
     @Body() createStudentDto: CreateStudentDto,
     @GetUser() user: User,
@@ -40,21 +40,21 @@ export class StudentsController {
     await this.studentsService.createStudent(createStudentDto, user);
   }
 
-  @Get('/:id/')
+  @Get('/:studentId/')
   @UseGuards(RolesGuard)
   @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
   async getStudentById(
-    @Param('id') id: string,
+    @Param('studentId') id: string,
     @GetUser() user: User,
   ): Promise<Student> {
     return this.studentsService.getStudentById(id, user);
   }
 
-  @Patch('/:id/')
+  @Patch('/:studentId/')
   @UseGuards(RolesGuard)
   @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
   async updateStudentById(
-    @Param('id') id: string,
+    @Param('studentId') id: string,
     @Body() updateStudentDto: UpdateStudentDto,
     @GetUser() user: User,
   ): Promise<void> {

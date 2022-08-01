@@ -1,11 +1,9 @@
-import { IsEnum, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsString } from 'class-validator';
 import { ContractType } from '../contract-type.enum';
 
 export class CreateContractDto {
-  @IsString()
-  customerId: string;
-
-  @IsString()
+  @IsArray()
+  @IsString({ each: true })
   studentIds: string[];
 
   @IsString()

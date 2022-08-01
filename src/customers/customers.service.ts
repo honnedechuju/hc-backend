@@ -14,6 +14,8 @@ import { CustomersRepository } from './customers.repository';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
+import { Connection } from 'typeorm';
+
 @Injectable()
 export class CustomersService {
   constructor(
@@ -22,10 +24,18 @@ export class CustomersService {
     @InjectRepository(UsersRepository)
     private usersRepository: UsersRepository,
     private stripeService: StripeService,
+    private connection: Connection,
   ) {}
 
-  async getCustomer(): Promise<Customer[]> {
-    return this.customersRepository.find();
+  async getCustomer(user: User): Promise<Customer | Customer[]> {
+    if (user.role === UserRole.ADMIN) {
+      return this.customersRepository.find();
+    }
+    return this.customersRepository.findOne({
+      where: {
+        user,
+      },
+    });
   }
 
   async createCustomer(
@@ -42,7 +52,8 @@ export class CustomersService {
       user,
     });
 
-    const queryRunner = this.customersRepository.queryRunner;
+    const queryRunner = this.connection.createQueryRunner();
+
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
@@ -52,8 +63,9 @@ export class CustomersService {
         customer.firstName + customer.lastName,
         user.email,
       );
-      customer.stripeId = response.id;
-      queryRunner.manager.save(customer);
+      customer.stripeCustomerId = response.id;
+      await queryRunner.manager.save(customer);
+      await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.log(error);
@@ -64,13 +76,13 @@ export class CustomersService {
   }
 
   async getCustomerById(id: string, user: User): Promise<Customer> {
-    const found = await this.customersRepository.findOne({ id });
+    const where: { id: string; user?: User } = { id };
+    if (user.role !== UserRole.ADMIN) {
+      where.user = user;
+    }
+    const found = await this.customersRepository.findOne({ where });
 
     if (!found) {
-      throw new NotFoundException(`Customer with ID "${id}" not found`);
-    }
-
-    if (user.role !== UserRole.ADMIN && found.user.id !== user.id) {
       throw new NotFoundException(`Customer with ID "${id}" not found`);
     }
 
@@ -83,7 +95,10 @@ export class CustomersService {
     user: User,
   ): Promise<void> {
     const found = await this.getCustomerById(id, user);
-    const customer: Customer = { ...found, ...updateCustomerByDto };
+    const customer: Customer = this.customersRepository.create({
+      ...found,
+      ...updateCustomerByDto,
+    });
     try {
       await this.customersRepository.save(customer);
     } catch (error) {

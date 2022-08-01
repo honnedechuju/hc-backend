@@ -2,11 +2,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Customer } from '../customer.entity';
+import { Payment } from '../payments/payment.entity';
 import { Student } from '../students/student.entity';
 import { ContractStatus } from './contract-status.enum';
 import { ContractType } from './contract-type.enum';
@@ -40,6 +43,9 @@ export class Contract {
 
   @Column()
   stripeSubscriptionId: string;
+
+  @OneToMany(() => Payment, (payment) => payment.contract)
+  payments: Payment[];
 
   @ManyToMany(() => Student, (student) => student.contracts)
   students: Student[];

@@ -26,8 +26,8 @@ export class CustomersController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
-  async getCustomer(): Promise<Customer[]> {
-    return this.customersService.getCustomer();
+  async getCustomer(@GetUser() user: User): Promise<Customer | Customer[]> {
+    return this.customersService.getCustomer(user);
   }
 
   @Post()
@@ -58,6 +58,7 @@ export class CustomersController {
     @Body() updateCustomerDto: UpdateCustomerDto,
     @GetUser() user: User,
   ): Promise<void> {
+    delete updateCustomerDto.stripeId;
     await this.customersService.updateCustomerById(id, updateCustomerDto, user);
   }
 }

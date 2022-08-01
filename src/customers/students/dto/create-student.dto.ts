@@ -1,4 +1,5 @@
-import { IsInt, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsDate, IsInt, IsString } from 'class-validator';
 
 export class CreateStudentDto {
   @IsString()
@@ -13,12 +14,17 @@ export class CreateStudentDto {
   @IsString()
   lastNameKana: string;
 
+  @Type(() => Number)
   @IsInt()
   gender: number;
+
+  @Type(() => Date)
+  @IsDate()
+  birthday: Date;
 
   @IsString()
   privateSchool: string;
 
   @IsString()
-  publicSchoool: string;
+  publicSchool: string;
 }
