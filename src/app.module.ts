@@ -9,7 +9,8 @@ import { CustomersModule } from './customers/customers.module';
 import { TeachersModule } from './teachers/teachers.module';
 import { StudentsModule } from './customers/students/students.module';
 import { PaymentsModule } from './customers/payments/payments.module';
-import { PaymentsService } from './customers/payments/payments.service';
+import { ImagesModule } from './images/images.module';
+import { VideosModule } from './videos/videos.module';
 
 @Module({
   imports: [
@@ -38,6 +39,8 @@ import { PaymentsService } from './customers/payments/payments.service';
     StudentsModule,
     TeachersModule,
     PaymentsModule,
+    ImagesModule,
+    VideosModule,
   ],
   controllers: [],
   providers: [],

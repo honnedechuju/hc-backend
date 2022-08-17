@@ -6,11 +6,10 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ContractType } from '../customers/contracts/contract-type.enum';
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
-import { ContractsService } from 'src/customers/contracts/contracts.service';
-import { PaymentsService } from 'src/customers/payments/payments.service';
+import { ContractsService } from '../customers/contracts/contracts.service';
+import { PaymentsService } from '../customers/payments/payments.service';
 
 @Injectable()
 export class StripeService {
@@ -41,7 +40,7 @@ export class StripeService {
       card: {
         exp_month: 12,
         exp_year: 2024,
-        number: '4100000000000019',
+        number: '4242424242424242',
         cvc: '333',
       },
     });
@@ -50,8 +49,8 @@ export class StripeService {
   async createSubscription(
     stripeCustomerId: string,
     paymentMethodId: string,
-    contractType: ContractType,
-    studentIds: string[],
+    metadata: any,
+    items: Stripe.SubscriptionCreateParams.Item[],
   ) {
     try {
       await this.stripe.paymentMethods.attach(paymentMethodId, {
@@ -70,17 +69,9 @@ export class StripeService {
       },
     });
 
-    const items = studentIds.map(
-      (studentId): Stripe.SubscriptionCreateParams.Item => ({
-        price: this.configService.get(`STRIPE_PRICE_ID_${contractType}`),
-        metadata: {
-          student_id: studentId,
-        },
-      }),
-    );
-
     const subscription = await this.stripe.subscriptions.create({
       customer: stripeCustomerId,
+      metadata,
       items,
       expand: ['latest_invoice.payment_intent'],
       // trial_period_days: 3,
@@ -89,27 +80,30 @@ export class StripeService {
     return subscription;
   }
 
-  async changeSubscriptionTypeById(
+  async payInvoiceById(invoiceId: string) {
+    return this.stripe.invoices.pay(invoiceId);
+  }
+
+  async updateSubscriptionById(
     stripeSubscriptionId: string,
-    contractType: ContractType,
+    params: Stripe.SubscriptionUpdateParams,
   ) {
     const subscription = await this.stripe.subscriptions.retrieve(
       stripeSubscriptionId,
     );
 
-    const itemsToBeDeleted = subscription.items.data.map((item) => ({
-      id: item.id,
-      deleted: true,
-    }));
+    if (params?.items) {
+      const itemsToBeDeleted = subscription.items.data.map((item) => ({
+        id: item.id,
+        deleted: true,
+      }));
 
-    return this.stripe.subscriptions.update(stripeSubscriptionId, {
-      items: [
-        ...itemsToBeDeleted,
-        {
-          price: this.configService.get(`STRIPE_PRICE_ID_${contractType}`),
-        },
-      ],
-    });
+      return this.stripe.subscriptions.update(stripeSubscriptionId, {
+        ...params,
+        items: [...itemsToBeDeleted, ...params.items],
+      });
+    }
+    return this.stripe.subscriptions.update(stripeSubscriptionId, params);
   }
 
   async cancelSubscriptionById(id: string) {
@@ -182,19 +176,6 @@ export class StripeService {
           paymentFailedInvoice,
         );
         break;
-
-      case 'customer.subscription.created':
-        const createdSubscription = event.data.object as Stripe.Subscription;
-        await this.contractsService.checkCreatedContractByStripeSubscription(
-          createdSubscription,
-        );
-        break;
-
-      case 'customer.subscription.updated':
-        const updatedSubscription = event.data.object as Stripe.Subscription;
-        await this.contractsService.checkUpdatedContractByStripeSubscriptionId(
-          updatedSubscription.id,
-        );
 
       case 'customer.subscription.deleted':
         const deletedSubscription = event.data.object as Stripe.Subscription;

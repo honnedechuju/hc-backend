@@ -29,6 +29,27 @@ export class Teacher {
   })
   status: TeacherStatus;
 
+  @Column()
+  firstName: string;
+
+  @Column()
+  firstNameKana: string;
+
+  @Column()
+  lastName: string;
+
+  @Column()
+  lastNameKana: string;
+
+  @Column()
+  phone: string;
+
+  @Column()
+  postalCode: string;
+
+  @Column('date')
+  birthday: Date;
+
   @Column({ type: 'int', default: 0 })
   assignedTasksNumber: number;
 

@@ -9,11 +9,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from 'src/auth/get-user.decorator';
-import { Roles } from 'src/auth/roles.decorator';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { UserRole } from 'src/auth/user-role.enum';
-import { User } from 'src/auth/user.entity';
+import { GetUser } from '../../auth/get-user.decorator';
+import { Roles } from '../../auth/roles.decorator';
+import { RolesGuard } from '../../auth/roles.guard';
+import { Role } from '../../auth/role.enum';
+import { User } from '../../auth/user.entity';
 import { Contract } from './contract.entity';
 import { ContractsService } from './contracts.service';
 import { CreateContractDto } from './dto/create-contract.dto';
@@ -26,7 +26,7 @@ export class ContractsController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
+  @Roles([Role.ADMIN, Role.CUSTOMER])
   async getContracts(@GetUser() user: User): Promise<Contract[]> {
     return this.contractsService.getContracts(user);
   }
@@ -36,6 +36,7 @@ export class ContractsController {
     @GetUser() user: User,
     @Body() createContractDto: CreateContractDto,
   ): Promise<void> {
+    console.log(createContractDto);
     return this.contractsService.createContract(createContractDto, user);
   }
 

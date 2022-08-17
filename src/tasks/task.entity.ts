@@ -4,11 +4,14 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Question } from '../questions/question.entity';
 import { Teacher } from '../teachers/teacher.entity';
+import { Answer } from './answers/answer.entity';
 import { TaskStatus } from './task-status.enum';
+import { TaskType } from './task-type.enum';
 
 @Entity()
 export class Task {
@@ -18,26 +21,29 @@ export class Task {
   @CreateDateColumn()
   timestamp: Date;
 
-  @Column('text', { array: true })
-  answers: string[];
-
-  @Column({ type: 'timestamp' })
-  answeredAt: Date;
-
-  @Column({ type: 'timestamp' })
-  completedAt: Date;
+  @Column({
+    type: 'enum',
+    enum: TaskType,
+  })
+  type: TaskType;
 
   @Column({
     type: 'enum',
     enum: TaskStatus,
-    default: TaskStatus.STARTED,
+    default: TaskStatus.PENDING,
   })
   status: string;
 
-  @ManyToOne((_type) => Question, (question) => question.task, { eager: true })
+  @Column({ type: 'timestamptz' })
+  completedAt: Date;
+
+  @OneToMany(() => Answer, (answer) => answer.task, { eager: true })
+  answers: Answer[];
+
+  @ManyToOne(() => Question, (question) => question.task, { eager: true })
   question: Question;
 
-  @ManyToOne((_type) => Teacher, (teacher) => teacher.tasks, { eager: true })
+  @ManyToOne(() => Teacher, (teacher) => teacher.tasks, { eager: true })
   @Exclude({ toPlainOnly: true })
   teacher: Teacher;
 }

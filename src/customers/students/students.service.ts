@@ -4,9 +4,10 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserRole } from 'src/auth/user-role.enum';
-import { User } from 'src/auth/user.entity';
+import { Role } from '../../auth/role.enum';
+import { User } from '../../auth/user.entity';
 import { CustomersRepository } from '../customers.repository';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -20,6 +21,7 @@ export class StudentsService {
     private customersRepository: CustomersRepository,
     @InjectRepository(StudentsRepository)
     private studentsRepository: StudentsRepository,
+    private jwtService: JwtService,
   ) {}
 
   async getStudents(user: User): Promise<Student[]> {
@@ -27,7 +29,7 @@ export class StudentsService {
     if (!customer) {
       throw new BadRequestException(`You must be registered Customer`);
     }
-    if (user.role === UserRole.ADMIN) {
+    if (user.role === Role.ADMIN) {
       return this.studentsRepository.find();
     }
     return this.studentsRepository.find({ customer });
@@ -92,5 +94,9 @@ export class StudentsService {
     if (result.length > 0) {
       throw new NotFoundException(`Student ID with "${result}" not found`);
     }
+  }
+
+  async getJwtTokenByStudentId(studentId: string, user: User) {
+    return this.jwtService.sign({ username: user.username, studentId });
   }
 }

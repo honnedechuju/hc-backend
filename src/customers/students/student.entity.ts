@@ -1,4 +1,4 @@
-import { Question } from 'src/questions/question.entity';
+import { Question } from '../../questions/question.entity';
 import {
   Column,
   Entity,
@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Contract } from '../contracts/contract.entity';
+import { Item } from '../contracts/item/item.entity';
 import { Customer } from '../customer.entity';
 @Entity()
 export class Student {
@@ -39,8 +40,17 @@ export class Student {
   @Column()
   publicSchool: string;
 
+  @Column({ type: 'numeric', nullable: true })
+  count: number;
+
+  @Column({ type: 'numeric', nullable: true })
+  stock: number;
+
   @OneToMany(() => Question, (question) => question.student, { eager: false })
   questions: Question[];
+
+  @OneToMany(() => Item, (item) => item.student, { eager: false })
+  items: Item[];
 
   @ManyToMany(() => Contract, (contract) => contract.students, { eager: false })
   @JoinTable()

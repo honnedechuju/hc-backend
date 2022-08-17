@@ -1,10 +1,12 @@
-import { User } from 'src/auth/user.entity';
+import { User } from '../auth/user.entity';
 import { EntityRepository, Repository } from 'typeorm';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { GetQuestionsFilterDto } from './dto/get-questions-fliter.dto';
-import { QuestionStatus } from './question-status.enum';
 import { Question } from './question.entity';
 import { InternalServerErrorException, Logger } from '@nestjs/common';
+import { Customer } from '../customers/customer.entity';
+import { Student } from '../customers/students/student.entity';
+import { Image } from '../images/image.entity';
 
 @EntityRepository(Question)
 export class QuestionsRepository extends Repository<Question> {
@@ -53,22 +55,19 @@ export class QuestionsRepository extends Repository<Question> {
 
   async createQuestion(
     createQuestionDto: CreateQuestionDto,
-    user: User,
+    problems: Image[],
+    solutions: Image[],
+    customer: Customer,
+    student: Student,
   ): Promise<Question> {
-    const { title, description, problems, solutions } = createQuestionDto;
+    const { title, description } = createQuestionDto;
     const question = this.create({
       title,
       description,
-      status: QuestionStatus.IN_PROGRESS,
-      timestamp: new Date(),
       problems,
       solutions,
-      answers: [],
-      message: '',
-      rating: 0,
-      request: false,
-      reports: '',
-      customer: user.customer,
+      customer,
+      student,
     });
 
     await this.save(question);

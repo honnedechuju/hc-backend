@@ -1,14 +1,18 @@
-import { IsArray, IsEnum, IsString } from 'class-validator';
-import { ContractType } from '../contract-type.enum';
-
+import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { CreateItemDto } from '../item/dto/create-item.dto';
 export class CreateContractDto {
-  @IsArray()
-  @IsString({ each: true })
-  studentIds: string[];
-
   @IsString()
   paymentMethodId: string;
 
-  @IsEnum(ContractType)
-  contractType: ContractType;
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CreateItemDto)
+  items: CreateItemDto[];
 }

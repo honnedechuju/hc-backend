@@ -3,12 +3,15 @@ import {
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Customer } from '../customers/customer.entity';
-import { UserRole } from './user-role.enum';
+import { Role } from './role.enum';
 import { Teacher } from '../teachers/teacher.entity';
+import { Permission } from './permission.enum';
+import { Image } from '../images/image.entity';
 
 @Entity()
 export class User {
@@ -28,12 +31,22 @@ export class User {
   lineId: string;
 
   @Column({
-    name: 'UserRole',
     type: 'enum',
-    enum: UserRole,
-    default: UserRole.CUSTOMER,
+    enum: Role,
+    default: Role.NONE,
   })
-  role: UserRole;
+  role: Role;
+
+  @Column({
+    type: 'enum',
+    enum: Permission,
+    array: true,
+    default: [],
+  })
+  permissions: Permission[];
+
+  @OneToMany(() => Image, (image) => image.user)
+  images: Image[];
 
   @OneToOne(() => Customer, (customer) => customer.user, {
     cascade: true,

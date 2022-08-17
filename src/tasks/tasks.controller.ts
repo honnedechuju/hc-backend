@@ -8,10 +8,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from 'src/auth/get-user.decorator';
-import { Roles } from 'src/auth/roles.decorator';
-import { UserRole } from 'src/auth/user-role.enum';
-import { User } from 'src/auth/user.entity';
+import { GetUser } from '../auth/get-user.decorator';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../auth/role.enum';
+import { User } from '../auth/user.entity';
 import { GetTasksFilterDto } from './dto/get-tasks-fliter.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './task.entity';
@@ -19,7 +19,7 @@ import { TasksService } from './tasks.service';
 
 @Controller('tasks')
 @UseGuards(AuthGuard())
-@Roles([UserRole.TEACHER, UserRole.ADMIN])
+@Roles([Role.TEACHER, Role.ADMIN])
 export class TasksController {
   constructor(private tasksService: TasksService) {}
 

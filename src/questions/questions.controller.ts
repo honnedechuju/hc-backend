@@ -13,8 +13,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from 'src/auth/get-user.decorator';
-import { User } from 'src/auth/user.entity';
+import { GetUser } from '../auth/get-user.decorator';
+import { User } from '../auth/user.entity';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { GetQuestionsFilterDto } from './dto/get-questions-fliter.dto';
 import { UpdateQuestionStatusDto } from './dto/update-question-status.dto';
@@ -22,6 +22,9 @@ import { Question } from './question.entity';
 import { QuestionsService } from './questions.service';
 import { Logger } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { Permissions } from '../auth/permissions.decorator';
+import { Permission } from '../auth/permission.enum';
 
 @Controller('questions')
 @UseGuards(AuthGuard())
@@ -50,6 +53,8 @@ export class QuestionsController {
     return this.questionsService.getQuestionById(id, user);
   }
 
+  @UseGuards(PermissionsGuard)
+  @Permissions(Permission.QUESTION)
   @Post()
   async createQuestion(
     @Body() createQuestionDto: CreateQuestionDto,

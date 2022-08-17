@@ -9,8 +9,8 @@ import { compare } from 'bcrypt';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtPayload } from './jwt-payload.interface';
-import { UserRole } from './user-role.enum';
+import JwtPayload from './jwt-payload.interface';
+import { Role } from './role.enum';
 import { User } from './user.entity';
 import { UsersRepository } from './users.repository';
 
@@ -28,15 +28,21 @@ export class AuthService {
 
   async signIn(authCredentialsDto: AuthCredentialsDto): Promise<{
     accessToken: string;
-    id: string;
   }> {
     const { username, password } = authCredentialsDto;
     const user = await this.usersRepository.findOne({ username });
 
     if (user && (await compare(password, user.password))) {
-      const payload: JwtPayload = { username };
+      const payload: JwtPayload = {
+        id: user.id,
+        username,
+        role: user.role,
+        permissions: user.permissions,
+      };
       const accessToken: string = this.jwtService.sign(payload);
-      return { id: user.id, accessToken };
+      return {
+        accessToken,
+      };
     } else {
       throw new UnauthorizedException('Please check your login credentials');
     }
@@ -47,7 +53,7 @@ export class AuthService {
   }
 
   async getUserById(id: string, user: User): Promise<User> {
-    if (id !== user.id && user.role !== UserRole.ADMIN) {
+    if (id !== user.id && user.role !== Role.ADMIN) {
       throw new UnauthorizedException();
     }
 

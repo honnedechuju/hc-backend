@@ -7,12 +7,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserRole } from 'src/auth/user-role.enum';
-import { User } from 'src/auth/user.entity';
-import { StripeService } from 'src/stripe/stripe.service';
+import { Permission } from '../../auth/permission.enum';
 import Stripe from 'stripe';
+
+import { Role } from '../../auth/role.enum';
+import { User } from '../../auth/user.entity';
+import { UsersRepository } from '../../auth/users.repository';
+import { StripeService } from '../../stripe/stripe.service';
 import { CustomersRepository } from '../customers.repository';
-import { Student } from '../students/student.entity';
 import { StudentsRepository } from '../students/students.repository';
 import { StudentsService } from '../students/students.service';
 import { ContractStatus } from './contract-status.enum';
@@ -21,25 +23,34 @@ import { Contract } from './contract.entity';
 import { ContractsRepository } from './contracts.repository';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
+import { ItemType } from './item/item-type.enum';
+import { ItemsRepository } from './item/items.repository';
+import { ItemsService } from './item/items.service';
 
 @Injectable()
 export class ContractsService {
   constructor(
-    private configService: ConfigService,
+    @InjectRepository(UsersRepository)
+    private usersRepository: UsersRepository,
     @InjectRepository(ContractsRepository)
     private contractsRepository: ContractsRepository,
+    @InjectRepository(ItemsRepository)
+    private itemsRepository: ItemsRepository,
     @InjectRepository(CustomersRepository)
     private customersRepository: CustomersRepository,
     @InjectRepository(StudentsRepository)
     private studentsRepository: StudentsRepository,
+
+    private configService: ConfigService,
     private studentsService: StudentsService,
+    private itemsService: ItemsService,
     @Inject(forwardRef(() => StripeService))
     private stripeService: StripeService,
   ) {}
 
   async getContracts(user: User): Promise<Contract[]> {
     const customer = await this.customersRepository.findOne({ user });
-    if (user.role === UserRole.ADMIN) {
+    if (user.role === Role.ADMIN) {
       return this.contractsRepository.find();
     } else {
       return this.contractsRepository.find({ customer });
@@ -51,41 +62,78 @@ export class ContractsService {
     user: User,
   ): Promise<void> {
     const customer = await this.customersRepository.findOne({ user });
-    const { studentIds, paymentMethodId, contractType } = createContractDto;
+    const { paymentMethodId, items: createItemsDto } = createContractDto;
 
     // checking student ids and retrieving all students data
-    await this.studentsService.checkCustomerStudents(studentIds, user);
-    const students = await Promise.all(
-      studentIds.map((id) => this.studentsService.getStudentById(id, user)),
+    const studentIds = createItemsDto.map(
+      (createItemDto) => createItemDto.studentId,
     );
+    await this.studentsService.checkCustomerStudents(studentIds, user);
+
+    // creating Items
+    const items = await Promise.all(
+      createItemsDto.map(async (createItemDto) => {
+        const student = await this.studentsService.getStudentById(
+          createItemDto.studentId,
+          user,
+        );
+        return this.itemsService.createItem(createItemDto.type, student);
+      }),
+    );
+
+    // creating Contract
+    const amount = items.reduce(
+      (sum, current) => sum + Number(current.price),
+      0,
+    );
+    const contract = this.contractsRepository.create({
+      amount,
+      items,
+      customer,
+    });
+
+    // creating Stripe subscription
+    const itemsParams =
+      this.itemsService.getStripeSubscriptionCreateParamsItem(items);
+
+    const metadata = {
+      contract_id: contract.id,
+    };
 
     const subscription = await this.stripeService.createSubscription(
       customer.stripeCustomerId,
       paymentMethodId,
-      contractType,
-      studentIds,
+      metadata,
+      itemsParams,
     );
-    const { id, status, current_period_start, current_period_end } =
-      subscription;
-    const stripeSubscriptionId = id;
-    const lastPaymentTime = new Date(current_period_start * 1000);
-    const nextPaymentTime = new Date(current_period_end * 1000);
-    const contractStatus =
-      this.getContractStatusFromStripeSubscriptionStatus(status);
 
-    await this.contractsRepository.createContract(
-      contractType,
-      contractStatus,
-      lastPaymentTime,
-      nextPaymentTime,
-      stripeSubscriptionId,
-      customer,
-      students,
+    // saving contract
+    const {
+      id,
+      status,
+      current_period_start,
+      current_period_end,
+      items: stripeItems,
+    } = subscription;
+    contract.stripeSubscriptionId = id;
+    contract.lastPaymentTime = new Date(current_period_start * 1000);
+    contract.nextPaymentTime = new Date(current_period_end * 1000);
+    contract.status =
+      this.getContractStatusFromStripeSubscriptionStatus(status);
+    const savedContract = await this.contractsRepository.save(contract);
+
+    // saving items
+    const updatedItems = await Promise.all(
+      items.map(async (item) => {
+        item.contract = savedContract;
+        return await this.itemsRepository.save(item);
+      }),
     );
+    await this.itemsService.saveItemsFromStripeItems(updatedItems, stripeItems);
   }
 
   async getContractById(id: string, user: User): Promise<Contract> {
-    if (user.role === UserRole.ADMIN) {
+    if (user.role === Role.ADMIN) {
       const found = await this.contractsRepository.findOne({ id });
       if (!found) {
         throw new NotFoundException();
@@ -106,22 +154,69 @@ export class ContractsService {
     updateContractDto: UpdateContractDto,
     user: User,
   ): Promise<void> {
+    const customer = await this.customersRepository.findOne({ user });
     const found = await this.getContractById(id, user);
-    if (updateContractDto.type && updateContractDto.type !== found.type) {
-      try {
-        const response = await this.stripeService.changeSubscriptionTypeById(
-          found.stripeSubscriptionId,
-          updateContractDto.type,
+
+    let params: Stripe.SubscriptionUpdateParams;
+
+    if (updateContractDto?.paymentMethodId) {
+      const { paymentMethodId } = updateContractDto;
+      const paymentMethods =
+        await this.stripeService.getPaymentMethodsByCustomerId(
+          customer.stripeCustomerId,
         );
-        console.log(response);
-      } catch (error) {
-        console.log(error);
-        throw new InternalServerErrorException(
-          `Contract with ID "${id} couldn't be modified`,
+      const paymentMethodIds = paymentMethods.data.map(
+        (paymentMethod) => paymentMethod.id,
+      );
+      if (!paymentMethodIds.includes(paymentMethodId)) {
+        await this.stripeService.attachPaymentMethodToCustomer(
+          paymentMethodId,
+          customer.stripeCustomerId,
         );
       }
+      params.default_payment_method = paymentMethodId;
     }
-    await this.contractsRepository.save({ ...found, ...updateContractDto });
+
+    if (updateContractDto?.items) {
+      const { items: createItemsDto } = updateContractDto;
+      const items = await Promise.all(
+        createItemsDto.map(async (createItemDto) => {
+          const student = await this.studentsService.getStudentById(
+            createItemDto.studentId,
+            user,
+          );
+          return this.itemsService.createItem(createItemDto.type, student);
+        }),
+      );
+      params.items =
+        this.itemsService.getStripeSubscriptionCreateParamsItem(items);
+
+      // update contract.items
+      found.items = items;
+      await this.contractsRepository.save(found);
+    }
+
+    let subscription: Stripe.Response<Stripe.Subscription>;
+
+    if (params) {
+      subscription = await this.stripeService.updateSubscriptionById(
+        found.stripeSubscriptionId,
+        params,
+      );
+    } else {
+      subscription = await this.stripeService.getSubscriptionById(
+        found.stripeSubscriptionId,
+      );
+    }
+
+    // retry to pay subscription invoice
+    if (updateContractDto.pay) {
+      if (typeof subscription.latest_invoice === 'string') {
+        await this.stripeService.payInvoiceById(subscription.latest_invoice);
+      } else {
+        await this.stripeService.payInvoiceById(subscription.latest_invoice.id);
+      }
+    }
   }
 
   async cancelContractById(contractId: string, user: User) {
@@ -141,40 +236,37 @@ export class ContractsService {
         `Contract with ID "${contractId} couldn't be canceled"`,
       );
     }
-    this.updateContractById(
-      contractId,
-      {
-        status: ContractStatus.CANCELED,
-      },
-      user,
-    );
+    found.status = ContractStatus.CANCELED;
+    await this.contractsRepository.save(found);
   }
 
-  async checkCreatedContractByStripeSubscription(
-    stripeSubscription: Stripe.Subscription,
+  async updateContractFromStripeSubscription(
+    subscription: Stripe.Subscription,
   ) {
     const contract =
       await this.contractsRepository.getContractByStripeSubscriptionId(
-        stripeSubscription.id,
+        subscription.id,
       );
-    // いずれ実装する
-  }
-
-  async checkUpdatedContractByStripeSubscriptionId(
-    stripeSubscriptionId: string,
-  ) {
-    this.contractsRepository.getContractByStripeSubscriptionId(
-      stripeSubscriptionId,
+    const {
+      status,
+      items: stripeItems,
+      current_period_start,
+      current_period_end,
+    } = subscription;
+    contract.lastPaymentTime = new Date(current_period_start * 1000);
+    contract.nextPaymentTime = new Date(current_period_end * 1000);
+    contract.status =
+      this.getContractStatusFromStripeSubscriptionStatus(status);
+    const items = await Promise.all(
+      stripeItems.data.map((stripeItem) => {
+        return this.itemsRepository.findOne(stripeItem.metadata['item_id']);
+      }),
     );
-  }
-
-  async checkFailedContractByStripeSubscriptionId(
-    stripeSubscription: Stripe.Subscription,
-  ) {
-    const found =
-      await this.contractsRepository.getContractByStripeSubscriptionId(
-        stripeSubscription.id,
-      );
+    contract.items = await this.itemsService.saveItemsFromStripeItems(
+      items,
+      stripeItems,
+    );
+    await this.contractsRepository.save(contract);
   }
 
   async checkCanceledContractByStripeSubscriptionId(
@@ -214,52 +306,41 @@ export class ContractsService {
     await this.updateContractFromStripeSubscription(subscription);
   }
 
-  async updateContractFromStripeSubscription(
-    subscription: Stripe.Subscription,
-  ) {
-    const contract =
-      await this.contractsRepository.getContractByStripeSubscriptionId(
-        subscription.id,
-      );
-    const { status, current_period_start, current_period_end, items } =
-      subscription;
-    const contractStatus =
-      this.getContractStatusFromStripeSubscriptionStatus(status);
-    contract.status = contractStatus;
-    contract.lastPaymentTime = new Date(current_period_start * 1000);
-    contract.nextPaymentTime = new Date(current_period_end * 1000);
-
-    const stripeSubscriptionContractType =
-      this.getContractTypeFromStripePriceId(items.data[0].price.id);
-    if (stripeSubscriptionContractType !== contract.type) {
-      console.error(
-        'Stripe Subscription Contract type and Contract type are different.',
-      );
-      console.error('Please Check Stripe and Contract Repository');
-      console.error(`Stripe Subscription ID "${subscription.id}"`);
-      contract.type = stripeSubscriptionContractType;
+  async updateUserPermissionsFromContracts(user: User) {
+    const customer = await this.customersRepository.findOne({ user });
+    const contracts = await this.contractsRepository.find({ customer });
+    const permissions: Permission[] = [];
+    for (const contract of contracts) {
+      if (
+        contract.status === ContractStatus.SETTLED ||
+        contract.status === ContractStatus.TRIAL
+      ) {
+        for (const item of contract.items) {
+          this.getUserPermissionsFromItemType(item.type).map((permission) => {
+            if (!permissions.includes(permission)) {
+              permissions.push(permission);
+            }
+          });
+        }
+      }
     }
+    user.permissions = permissions;
+    await this.usersRepository.save(user);
+  }
 
-    const stripeStudentIds: string[] = [];
-    items.data.map((item) => {
-      stripeStudentIds.push(item.metadata['student_id']);
-    });
-    const contractStudents = await Promise.resolve(contract.students);
-    const contractStudentIds = contractStudents.map((student) => student.id);
-    if (
-      stripeStudentIds.sort().join(',') !== contractStudentIds.sort().join(',')
-    ) {
-      console.error(
-        'Stripe Subscriptiono StudentIds and Contract StudentIds are different.',
-      );
-      console.error('Please Check Stripe and Contract Repository');
-      console.error(`Stripe Subscription ID "${subscription.id}"`);
-      contract.students = await Promise.all(
-        stripeStudentIds.map((id) => this.studentsRepository.findOne(id)),
-      );
+  // helper functions
+
+  getUserPermissionsFromItemType(item: ItemType) {
+    switch (item) {
+      case ItemType.LIMITED:
+        return [Permission.QUESTION];
+      case ItemType.UNLIMITED:
+        return [Permission.QUESTION];
+      case ItemType.TUTOR:
+        return [Permission.QUESTION];
+      default:
+        return [];
     }
-
-    await this.contractsRepository.save(contract);
   }
 
   getContractStatusFromStripeSubscriptionStatus(

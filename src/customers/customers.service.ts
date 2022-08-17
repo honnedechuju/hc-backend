@@ -5,9 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserRole } from 'src/auth/user-role.enum';
-import { UsersRepository } from 'src/auth/users.repository';
-import { StripeService } from 'src/stripe/stripe.service';
+import { Role } from '../auth/role.enum';
+import { StripeService } from '../stripe/stripe.service';
 import { User } from '../auth/user.entity';
 import { Customer } from './customer.entity';
 import { CustomersRepository } from './customers.repository';
@@ -22,14 +21,12 @@ export class CustomersService {
   constructor(
     @InjectRepository(CustomersRepository)
     private customersRepository: CustomersRepository,
-    @InjectRepository(UsersRepository)
-    private usersRepository: UsersRepository,
     private stripeService: StripeService,
     private connection: Connection,
   ) {}
 
   async getCustomer(user: User): Promise<Customer | Customer[]> {
-    if (user.role === UserRole.ADMIN) {
+    if (user.role === Role.ADMIN) {
       return this.customersRepository.find();
     }
     return this.customersRepository.findOne({
@@ -64,7 +61,6 @@ export class CustomersService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      await queryRunner.manager.save(customer);
       const response = await this.stripeService.createCustomer(
         customer.id,
         customer.firstName + customer.lastName,
@@ -72,6 +68,8 @@ export class CustomersService {
       );
       customer.stripeCustomerId = response.id;
       await queryRunner.manager.save(customer);
+      user.role = Role.CUSTOMER;
+      await queryRunner.manager.save(user);
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -84,7 +82,7 @@ export class CustomersService {
 
   async getCustomerById(id: string, user: User): Promise<Customer> {
     const where: { id: string; user?: User } = { id };
-    if (user.role !== UserRole.ADMIN) {
+    if (user.role !== Role.ADMIN) {
       where.user = user;
     }
     const found = await this.customersRepository.findOne({ where });

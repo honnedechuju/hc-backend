@@ -1,0 +1,6 @@
+export enum AnswerStatus {
+  STARTED = 'STARTED',
+  ANSWERED = 'ANSWERED',
+  COMPLETED = 'COMPLETED',
+  CANCELED = 'CANCELED',
+}

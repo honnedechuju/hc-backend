@@ -1,13 +1,21 @@
-import { IsEnum, IsOptional } from 'class-validator';
-import { ContractStatus } from '../contract-status.enum';
-import { ContractType } from '../contract-type.enum';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { CreateItemDto } from '../item/dto/create-item.dto';
 
 export class UpdateContractDto {
   @IsOptional()
-  @IsEnum(ContractType)
-  type?: ContractType;
+  @IsBoolean()
+  pay?: boolean;
 
   @IsOptional()
-  @IsEnum(ContractStatus)
-  status?: ContractStatus;
+  @IsString()
+  paymentMethodId?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  items?: CreateItemDto[];
 }

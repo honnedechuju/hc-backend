@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from 'src/auth/auth.module';
-import { UsersRepository } from 'src/auth/users.repository';
-import { CustomersModule } from 'src/customers/customers.module';
-import { CustomersRepository } from 'src/customers/customers.repository';
-import { CustomersService } from 'src/customers/customers.service';
-import { StudentsModule } from 'src/customers/students/students.module';
-import { StudentsRepository } from 'src/customers/students/students.repository';
-import { StudentsService } from 'src/customers/students/students.service';
+import { AuthModule } from '../auth/auth.module';
+import { UsersRepository } from '../auth/users.repository';
+import { CustomersModule } from '../customers/customers.module';
+import { CustomersRepository } from '../customers/customers.repository';
+import { CustomersService } from '../customers/customers.service';
+import { StudentsModule } from '../customers/students/students.module';
+import { StudentsRepository } from '../customers/students/students.repository';
+import { ImagesRepository } from '../images/images.repository';
+import { TasksRepository } from '../tasks/tasks.repository';
 import { QuestionsController } from './questions.controller';
 import { QuestionsRepository } from './questions.repository';
 import { QuestionsService } from './questions.service';
@@ -19,12 +20,14 @@ import { QuestionsService } from './questions.service';
       StudentsRepository,
       CustomersRepository,
       UsersRepository,
+      ImagesRepository,
+      TasksRepository,
     ]),
     AuthModule,
     StudentsModule,
     CustomersModule,
   ],
   controllers: [QuestionsController],
-  providers: [QuestionsService, StudentsService, CustomersService],
+  providers: [QuestionsService, CustomersService],
 })
 export class QuestionsModule {}

@@ -7,12 +7,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomersRepository } from './customers.repository';
 import { AuthModule } from '../auth/auth.module';
 import { UsersRepository } from '../auth/users.repository';
-import { StripeModule } from 'src/stripe/stripe.module';
+import { StripeModule } from '../stripe/stripe.module';
 import { StudentsRepository } from './students/students.repository';
 import { PaymentsModule } from './payments/payments.module';
 
 @Module({
-  providers: [CustomersService, StudentsService],
+  providers: [CustomersService],
   controllers: [CustomersController],
   imports: [
     TypeOrmModule.forFeature([

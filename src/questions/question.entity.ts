@@ -1,11 +1,15 @@
 import { Exclude } from 'class-transformer';
-import { Customer } from 'src/customers/customer.entity';
-import { Student } from 'src/customers/students/student.entity';
-import { Task } from 'src/tasks/task.entity';
+import { Contract } from '../customers/contracts/contract.entity';
+import { Customer } from '../customers/customer.entity';
+import { Student } from '../customers/students/student.entity';
+import { Image } from '../images/image.entity';
+import { Answer } from '../tasks/answers/answer.entity';
+import { Task } from '../tasks/task.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -17,14 +21,14 @@ export class Question {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @CreateDateColumn({ type: 'timestamptz' })
+  timestamp: Date;
+
   @Column()
   title: string;
 
   @Column()
   description: string;
-
-  @CreateDateColumn()
-  timestamp: Date;
 
   @Column({
     type: 'enum',
@@ -33,29 +37,32 @@ export class Question {
   })
   status: QuestionStatus;
 
-  @Column('text', { array: true })
-  problems: string[];
+  @OneToMany(() => Image, (image) => image.questions, { eager: true })
+  problems: Image[];
 
-  @Column('text', { array: true })
-  solutions: string[];
+  @OneToMany(() => Image, (image) => image.problems, { eager: true })
+  solutions: Image[];
 
-  @Column('text', { array: true })
-  answers: string[];
+  @ManyToMany(() => Answer, (answer) => answer.question, { eager: true })
+  answers: Answer[];
 
-  @Column()
+  @Column({ nullable: true })
   message: string;
 
-  @Column()
+  @Column({ type: 'numeric' })
   rating: number;
 
-  @Column()
+  @Column({ type: 'boolean', default: false })
   request: boolean;
 
-  @Column()
+  @Column({ nullable: true })
   reports: string;
 
   @OneToMany(() => Task, (task) => task.question, { eager: false })
   task: Task[];
+
+  @ManyToOne(() => Contract, (contract) => contract.questions)
+  contract: Contract;
 
   @ManyToOne(() => Student, (student) => student.questions, {
     eager: true,
@@ -63,6 +70,6 @@ export class Question {
   @Exclude({ toPlainOnly: false })
   student: Student;
 
-  @ManyToOne(() => Customer, (customer) => customer.questions, { eager: false })
+  @ManyToOne(() => Customer, (customer) => customer.questions)
   customer: Customer;
 }

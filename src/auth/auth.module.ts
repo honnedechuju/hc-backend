@@ -11,6 +11,7 @@ import { CustomersService } from '../customers/customers.service';
 import { CustomersRepository } from '../customers/customers.repository';
 import { TeachersRepository } from '../teachers/teachers.repository';
 import { TeachersService } from '../teachers/teachers.service';
+import { StudentsRepository } from '../customers/students/students.repository';
 
 @Module({
   imports: [
@@ -30,10 +31,11 @@ import { TeachersService } from '../teachers/teachers.service';
       UsersRepository,
       CustomersRepository,
       TeachersRepository,
+      StudentsRepository,
     ]),
   ],
   providers: [AuthService, CustomersService, TeachersService, JwtStrategy],
   controllers: [AuthController],
-  exports: [JwtStrategy, PassportModule],
+  exports: [AuthService, JwtStrategy, PassportModule],
 })
 export class AuthModule {}

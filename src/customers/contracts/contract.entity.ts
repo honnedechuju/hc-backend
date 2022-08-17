@@ -1,8 +1,8 @@
+import { Question } from '../../questions/question.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -12,7 +12,7 @@ import { Customer } from '../customer.entity';
 import { Payment } from '../payments/payment.entity';
 import { Student } from '../students/student.entity';
 import { ContractStatus } from './contract-status.enum';
-import { ContractType } from './contract-type.enum';
+import { Item } from './item/item.entity';
 
 @Entity()
 export class Contract {
@@ -22,27 +22,27 @@ export class Contract {
   @CreateDateColumn({ type: 'timestamptz' })
   timestamp: Date;
 
-  @Column({
-    type: 'enum',
-    enum: ContractType,
-  })
-  type: ContractType;
+  @Column({ type: 'numeric' })
+  amount: number;
 
   @Column({
     type: 'enum',
     enum: ContractStatus,
-    default: ContractStatus.SETTLED,
+    default: ContractStatus.NOTPAID,
   })
   status: ContractStatus;
 
   @Column({ type: 'timestamptz', nullable: true })
-  lastPaymentTime: Date;
+  lastPaymentTime?: Date;
 
   @Column({ type: 'timestamptz', nullable: true })
-  nextPaymentTime: Date;
+  nextPaymentTime?: Date;
 
-  @Column()
-  stripeSubscriptionId: string;
+  @Column({ nullable: true })
+  stripeSubscriptionId?: string;
+
+  @OneToMany(() => Item, (item) => item.contract, { eager: true })
+  items: Item[];
 
   @OneToMany(() => Payment, (payment) => payment.contract)
   payments: Payment[];
@@ -50,6 +50,9 @@ export class Contract {
   @ManyToMany(() => Student, (student) => student.contracts)
   students: Student[];
 
-  @ManyToOne(() => Customer, (customer) => customer.contracts)
+  @ManyToOne(() => Customer, (customer) => customer.contracts, { eager: true })
   customer: Customer;
+
+  @OneToMany(() => Question, (question) => question.contract)
+  questions: Question[];
 }

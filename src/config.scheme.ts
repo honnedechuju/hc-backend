@@ -13,4 +13,7 @@ export const configValidationScheme = Joi.object({
   STRIPE_PRICE_ID_LIMITED: Joi.string().required(),
   STRIPE_PRICE_ID_UNLIMITED: Joi.string().required(),
   STRIPE_PRICE_ID_TUTOR: Joi.string().required(),
+  PRICE_OF_LIMITED: Joi.string().required(),
+  PRICE_OF_UNLIMITED: Joi.string().required(),
+  PRICE_OF_TUTOR: Joi.string().required(),
 });
