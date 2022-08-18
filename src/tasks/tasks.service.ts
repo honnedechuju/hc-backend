@@ -7,12 +7,15 @@ import { Task } from './task.entity';
 import { TasksRepository } from './tasks.repository';
 
 import { Equal } from 'typeorm';
+import { Question } from 'src/questions/question.entity';
+import { TeachersService } from 'src/teachers/teachers.service';
 
 @Injectable()
 export class TasksService {
   constructor(
     @InjectRepository(TasksRepository)
     private tasksRepository: TasksRepository,
+    private teachersService: TeachersService,
   ) {}
 
   async getTasks(filterDto: GetTasksFilterDto, user: User): Promise<Task[]> {
@@ -43,5 +46,25 @@ export class TasksService {
     await this.tasksRepository.save(task);
 
     return task;
+  }
+
+  async createTaskFromQuestion(question: Question) {
+    const teacher =
+      await this.teachersService.getTheFewestTasksAssignedTeacher();
+    const dueDate = this.getDueDate();
+    return this.tasksRepository.create({ dueDate, question, teacher });
+  }
+
+  getDueDate() {
+    const now = new Date();
+    const nextDay = new Date();
+    nextDay.setDate(now.getDate() + 1);
+    if (nextDay.getHours() < 8) {
+      nextDay.setHours(10);
+    } else if (22 < nextDay.getHours()) {
+      nextDay.setDate(nextDay.getDate() + 1);
+      nextDay.setHours(8);
+    }
+    return nextDay;
   }
 }

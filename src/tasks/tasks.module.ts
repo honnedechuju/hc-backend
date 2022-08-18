@@ -8,14 +8,20 @@ import { TasksService } from './tasks.service';
 import { AnswersService } from './answers/answers.service';
 import { AnswersController } from './answers/answers.controller';
 import { AnswersModule } from './answers/answers.module';
+import { OssrsController } from './ossrs/ossrs.controller';
+import { OssrsModule } from './ossrs/ossrs.module';
+import { TeachersModule } from 'src/teachers/teachers.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([TasksRepository, VideosRepository]),
     AuthModule,
     AnswersModule,
+    OssrsModule,
+    TeachersModule,
   ],
-  controllers: [TasksController, AnswersController],
+  controllers: [TasksController, AnswersController, OssrsController],
   providers: [TasksService, AnswersService],
+  exports: [TasksService],
 })
 export class TasksModule {}

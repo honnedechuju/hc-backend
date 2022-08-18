@@ -1,3 +1,4 @@
+import { Reward } from 'src/rewards/reward.entity';
 import {
   Column,
   Entity,
@@ -18,9 +19,6 @@ export class Teacher {
 
   @Column()
   nickname: string;
-
-  @Column()
-  lineId: string;
 
   @Column({
     type: 'enum',
@@ -55,6 +53,9 @@ export class Teacher {
 
   @OneToMany(() => Task, (task) => task.teacher, { eager: false })
   tasks: Task[];
+
+  @OneToMany(() => Reward, (reward) => reward.teacher)
+  rewards: Reward[];
 
   @OneToOne(() => User, (user) => user.teacher, { eager: false })
   @JoinColumn()

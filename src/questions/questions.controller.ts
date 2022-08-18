@@ -59,7 +59,7 @@ export class QuestionsController {
   async createQuestion(
     @Body() createQuestionDto: CreateQuestionDto,
     @GetUser() user: User,
-  ): Promise<Question> {
+  ): Promise<void> {
     return this.questionsService.createQuestion(createQuestionDto, user);
   }
 

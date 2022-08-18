@@ -52,7 +52,4 @@ export class Contract {
 
   @ManyToOne(() => Customer, (customer) => customer.contracts, { eager: true })
   customer: Customer;
-
-  @OneToMany(() => Question, (question) => question.contract)
-  questions: Question[];
 }

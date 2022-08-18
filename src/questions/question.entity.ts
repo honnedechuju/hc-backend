@@ -13,6 +13,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { QuestionStatus } from './question-status.enum';
 
@@ -22,7 +23,10 @@ export class Question {
   id: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  timestamp: Date;
+  createDate: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updateDate: Date;
 
   @Column()
   title: string;
@@ -59,10 +63,7 @@ export class Question {
   reports: string;
 
   @OneToMany(() => Task, (task) => task.question, { eager: false })
-  task: Task[];
-
-  @ManyToOne(() => Contract, (contract) => contract.questions)
-  contract: Contract;
+  tasks: Task[];
 
   @ManyToOne(() => Student, (student) => student.questions, {
     eager: true,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TasksModule } from '../tasks/tasks.module';
 import { AuthModule } from '../auth/auth.module';
 import { UsersRepository } from '../auth/users.repository';
 import { CustomersModule } from '../customers/customers.module';
@@ -26,6 +27,7 @@ import { QuestionsService } from './questions.service';
     AuthModule,
     StudentsModule,
     CustomersModule,
+    TasksModule,
   ],
   controllers: [QuestionsController],
   providers: [QuestionsService, CustomersService],

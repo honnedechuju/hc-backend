@@ -52,7 +52,6 @@ export class TeachersService {
 
     const {
       nickname,
-      lineId,
       firstName,
       firstNameKana,
       lastName,
@@ -65,8 +64,6 @@ export class TeachersService {
     const teacher = this.teachersRepository.create({
       nickname,
       status: TeacherStatus.ACTIVE,
-      assignedTasksNumber: 0,
-      lineId,
       firstName,
       firstNameKana,
       lastName,
@@ -123,5 +120,18 @@ export class TeachersService {
     }
 
     return found;
+  }
+
+  async getTheFewestTasksAssignedTeacher() {
+    const teacher = await this.teachersRepository.findOne({
+      where: { status: TeacherStatus.ACTIVE },
+      order: { assignedTasksNumber: 'DESC' },
+    });
+    if (!teacher) {
+      throw new InternalServerErrorException(
+        `The fewest tasks assigned teacher eacher not found`,
+      );
+    }
+    return teacher;
   }
 }

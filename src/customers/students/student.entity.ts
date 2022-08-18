@@ -11,6 +11,7 @@ import {
 import { Contract } from '../contracts/contract.entity';
 import { Item } from '../contracts/item/item.entity';
 import { Customer } from '../customer.entity';
+import { OSSR } from 'src/tasks/ossrs/ossr.entity';
 @Entity()
 export class Student {
   @PrimaryGeneratedColumn('uuid')
@@ -51,6 +52,9 @@ export class Student {
 
   @OneToMany(() => Item, (item) => item.student, { eager: false })
   items: Item[];
+
+  @ManyToMany(() => OSSR, (ossr) => ossr.students, { eager: false })
+  ossrs: OSSR[];
 
   @ManyToMany(() => Contract, (contract) => contract.students, { eager: false })
   @JoinTable()

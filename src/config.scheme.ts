@@ -16,4 +16,7 @@ export const configValidationScheme = Joi.object({
   PRICE_OF_LIMITED: Joi.string().required(),
   PRICE_OF_UNLIMITED: Joi.string().required(),
   PRICE_OF_TUTOR: Joi.string().required(),
+  LINE_MESSAGING_API_ACCESS_TOKEN: Joi.string().required(),
+  LINE_MESSAGING_API_CHANNEL_SECRET: Joi.string().required(),
+  LINE_LOGIN_CHANNEL_SECRET: Joi.string().required(),
 });

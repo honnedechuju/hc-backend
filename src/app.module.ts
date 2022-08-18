@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
+
 import { QuestionsModule } from './questions/questions.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -11,6 +13,9 @@ import { StudentsModule } from './customers/students/students.module';
 import { PaymentsModule } from './customers/payments/payments.module';
 import { ImagesModule } from './images/images.module';
 import { VideosModule } from './videos/videos.module';
+import { RewardsModule } from './rewards/rewards.module';
+import { LineModule } from './line/line.module';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
@@ -32,6 +37,7 @@ import { VideosModule } from './videos/videos.module';
         database: configService.get('DB_DATABASE'),
       }),
     }),
+    ScheduleModule.forRoot(),
     QuestionsModule,
     AuthModule,
     TasksModule,
@@ -41,6 +47,9 @@ import { VideosModule } from './videos/videos.module';
     PaymentsModule,
     ImagesModule,
     VideosModule,
+    RewardsModule,
+    LineModule,
+    JobsModule,
   ],
   controllers: [],
   providers: [],

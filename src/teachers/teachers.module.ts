@@ -13,5 +13,6 @@ import { UsersRepository } from '../auth/users.repository';
   ],
   controllers: [TeachersController],
   providers: [TeachersService],
+  exports: [TeachersService],
 })
 export class TeachersModule {}

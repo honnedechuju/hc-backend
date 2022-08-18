@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { QuestionStatus } from './question-status.enum';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { GetQuestionsFilterDto } from './dto/get-questions-fliter.dto';
@@ -10,6 +14,8 @@ import { CustomersRepository } from '../customers/customers.repository';
 import { StudentsRepository } from '../customers/students/students.repository';
 import { ImagesRepository } from '../images/images.repository';
 import { Image } from '../images/image.entity';
+import { Connection } from 'typeorm';
+import { TasksService } from 'src/tasks/tasks.service';
 
 @Injectable()
 export class QuestionsService {
@@ -22,6 +28,8 @@ export class QuestionsService {
     private customersRepository: CustomersRepository,
     @InjectRepository(StudentsRepository)
     private studentsRepository: StudentsRepository,
+    private tasksService: TasksService,
+    private connection: Connection,
   ) {}
 
   async getQuestions(
@@ -46,7 +54,7 @@ export class QuestionsService {
   async createQuestion(
     createQuestionDto: CreateQuestionDto,
     user: User,
-  ): Promise<Question> {
+  ): Promise<void> {
     const customer = await this.customersRepository.findOne({ user });
     const {
       problems: problemImageIds,
@@ -86,13 +94,44 @@ export class QuestionsService {
       customer,
     });
 
-    return this.questionsRepository.createQuestion(
-      createQuestionDto,
-      problems,
-      solutions,
-      customer,
-      student,
-    );
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+
+    const queryRunner = this.connection.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const question = await this.questionsRepository.createQuestion(
+        createQuestionDto,
+        problems,
+        solutions,
+        customer,
+        student,
+      );
+
+      const task = await this.tasksService.createTaskFromQuestion(question);
+
+      // ここでTask Schedulingが必要になる
+
+      await queryRunner.manager.save(question);
+      const savedTask = await queryRunner.manager.save(task);
+
+      await queryRunner.manager.update(
+        Question,
+        { id: question.id },
+        { tasks: [savedTask] },
+      );
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      console.log(error);
+      throw new InternalServerErrorException();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async deleteQuestion(id: string, user: User): Promise<void> {
