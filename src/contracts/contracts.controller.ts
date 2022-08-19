@@ -9,17 +9,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from '../../auth/get-user.decorator';
-import { Roles } from '../../auth/roles.decorator';
-import { RolesGuard } from '../../auth/roles.guard';
-import { Role } from '../../auth/role.enum';
-import { User } from '../../auth/user.entity';
+import { GetUser } from '../auth/get-user.decorator';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { Role } from '../auth/role.enum';
+import { User } from '../auth/user.entity';
 import { Contract } from './contract.entity';
 import { ContractsService } from './contracts.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
 
-@Controller('customers/:customerId/contracts')
+@Controller('contracts')
 @UseGuards(AuthGuard())
 export class ContractsController {
   constructor(private contractsService: ContractsService) {}

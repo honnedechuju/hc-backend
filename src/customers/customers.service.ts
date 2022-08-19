@@ -14,32 +14,32 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 import { Connection } from 'typeorm';
-import { CreatePaymentMethodDto } from './contracts/dto/create-payment-method.dto';
+import { CreatePaymentMethodDto } from '../contracts/dto/create-payment-method.dto';
+import { UsersRepository } from 'src/auth/users.repository';
 
 @Injectable()
 export class CustomersService {
   constructor(
     @InjectRepository(CustomersRepository)
     private customersRepository: CustomersRepository,
+    @InjectRepository(UsersRepository)
+    private usersRepository: UsersRepository,
     private stripeService: StripeService,
     private connection: Connection,
   ) {}
 
-  async getCustomer(user: User): Promise<Customer | Customer[]> {
-    if (user.role === Role.ADMIN) {
-      return this.customersRepository.find();
+  async getCustomer(user: User): Promise<Customer> {
+    const found = await this.customersRepository.findOne({ user });
+    if (!found) {
+      throw new NotFoundException(
+        `Customer with User ID "${user.id}" not found`,
+      );
     }
-    return this.customersRepository.findOne({
-      where: {
-        user,
-      },
-    });
+    return found;
   }
 
-  async getCustomerFromUser(user: User): Promise<Customer> {
-    return this.customersRepository.findOne({
-      user,
-    });
+  async adminGetCustomer(): Promise<Customer[]> {
+    return this.customersRepository.find();
   }
 
   async createCustomer(
@@ -47,9 +47,11 @@ export class CustomersService {
     user: User,
   ): Promise<void> {
     const found = await this.customersRepository.findOne({ user });
-    if (found) {
+    if (found || user.role !== Role.NONE) {
       throw new BadRequestException('Customer is already registered.');
     }
+
+    delete createCustomerDto?.userId;
 
     const customer = this.customersRepository.create({
       ...createCustomerDto,
@@ -80,30 +82,49 @@ export class CustomersService {
     }
   }
 
-  async getCustomerById(id: string, user: User): Promise<Customer> {
-    const where: { id: string; user?: User } = { id };
-    if (user.role !== Role.ADMIN) {
-      where.user = user;
+  async adminCreateCustomer(createCustomerDto: CreateCustomerDto) {
+    const { userId } = createCustomerDto;
+    const found = await this.usersRepository.findOne(userId);
+    if (!found) {
+      throw new NotFoundException(`User with ID "${userId}" not found`);
     }
-    const found = await this.customersRepository.findOne({ where });
+    await this.createCustomer(createCustomerDto, found);
+  }
 
+  async getCustomerById(id: string): Promise<Customer> {
+    const found = await this.customersRepository.findOne({ id });
     if (!found) {
       throw new NotFoundException(`Customer with ID "${id}" not found`);
     }
-
     return found;
   }
 
   async updateCustomerById(
     id: string,
-    updateCustomerByDto: UpdateCustomerDto,
-    user: User,
+    updateCustomerDto: UpdateCustomerDto,
   ): Promise<void> {
-    const found = await this.getCustomerById(id, user);
-    const customer: Customer = this.customersRepository.create({
-      ...found,
-      ...updateCustomerByDto,
-    });
+    const customer = await this.getCustomerById(id);
+    if (updateCustomerDto?.firstName) {
+      customer.firstName = updateCustomerDto.firstName;
+    }
+    if (updateCustomerDto?.firstNameKana) {
+      customer.firstNameKana = updateCustomerDto.firstNameKana;
+    }
+    if (updateCustomerDto?.lastName) {
+      customer.lastName = updateCustomerDto.lastName;
+    }
+    if (updateCustomerDto?.lastNameKana) {
+      customer.lastNameKana = updateCustomerDto.lastNameKana;
+    }
+    if (updateCustomerDto?.phone) {
+      customer.phone = updateCustomerDto.phone;
+    }
+    if (updateCustomerDto?.postalCode) {
+      customer.postalCode = updateCustomerDto.postalCode;
+    }
+    if (updateCustomerDto?.birthday) {
+      customer.birthday = updateCustomerDto.birthday;
+    }
     try {
       await this.customersRepository.save(customer);
     } catch (error) {
@@ -111,8 +132,8 @@ export class CustomersService {
     }
   }
 
-  async getPaymentMethods(customerId: string, user: User) {
-    const customer = await this.getCustomerById(customerId, user);
+  async getPaymentMethods(customerId: string) {
+    const customer = await this.getCustomerById(customerId);
     return this.stripeService.getPaymentMethodsByCustomerId(
       customer.stripeCustomerId,
     );
@@ -121,10 +142,9 @@ export class CustomersService {
   async postPaymentMethod(
     customerId: string,
     createPaymentMethodDto: CreatePaymentMethodDto,
-    user: User,
   ) {
     const { stripePaymentMethodId } = createPaymentMethodDto;
-    const customer = await this.getCustomerById(customerId, user);
+    const customer = await this.getCustomerById(customerId);
     return this.stripeService.attachPaymentMethodToCustomer(
       stripePaymentMethodId,
       customer.stripeCustomerId,
@@ -134,9 +154,8 @@ export class CustomersService {
   async deletePaymentMethodById(
     customerId: string,
     stripePaymentMethodId: string,
-    user: User,
   ) {
-    const customer = await this.getCustomerById(customerId, user);
+    const customer = await this.getCustomerById(customerId);
     const paymentMethods =
       await this.stripeService.getPaymentMethodsByCustomerId(
         customer.stripeCustomerId,

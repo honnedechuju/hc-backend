@@ -66,13 +66,13 @@ export class AuthService {
     return found;
   }
 
-  async updateUserById(
-    id: string,
-    updateUserDto: UpdateUserDto,
-    user: User,
-  ): Promise<void> {
-    const found = await this.getUserById(id, user);
+  // async updateUserById(
+  //   id: string,
+  //   updateUserDto: UpdateUserDto,
+  //   user: User,
+  // ): Promise<void> {
+  //   const found = await this.getUserById(id, user);
 
-    this.usersRepository.updateUser(updateUserDto, found);
-  }
+  //   this.usersRepository.updateUser(updateUserDto, found);
+  // }
 }

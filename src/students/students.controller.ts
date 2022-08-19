@@ -8,18 +8,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from '../../auth/get-user.decorator';
-import { Roles } from '../../auth/roles.decorator';
-import { RolesGuard } from '../../auth/roles.guard';
-import { Role } from '../../auth/role.enum';
-import { User } from '../../auth/user.entity';
+import { GetUser } from '../auth/get-user.decorator';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { Role } from '../auth/role.enum';
+import { User } from '../auth/user.entity';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { Student } from './student.entity';
 import { StudentsService } from './students.service';
-import { GetStudent } from './get-student.decorator';
 
-@Controller('/customers/:customerId/students')
+@Controller('students')
 @UseGuards(AuthGuard())
 export class StudentsController {
   constructor(private studentsService: StudentsService) {}
@@ -70,12 +69,5 @@ export class StudentsController {
     @GetUser() user: User,
   ) {
     return this.studentsService.getJwtTokenByStudentId(studentId, user);
-  }
-
-  @Get('/:studentId/test')
-  @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN, Role.CUSTOMER])
-  async test(@GetStudent() student: Student) {
-    console.log(student);
   }
 }

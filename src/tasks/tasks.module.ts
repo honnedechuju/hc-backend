@@ -5,12 +5,13 @@ import { VideosRepository } from '../videos/videos.repository';
 import { TasksController } from './tasks.controller';
 import { TasksRepository } from './tasks.repository';
 import { TasksService } from './tasks.service';
-import { AnswersService } from './answers/answers.service';
-import { AnswersController } from './answers/answers.controller';
-import { AnswersModule } from './answers/answers.module';
-import { OssrsController } from './ossrs/ossrs.controller';
-import { OssrsModule } from './ossrs/ossrs.module';
+import { AnswersService } from '../answers/answers.service';
+import { AnswersController } from '../answers/answers.controller';
+import { AnswersModule } from '../answers/answers.module';
+import { OssrsController } from '../ossrs/ossrs.controller';
+import { OssrsModule } from '../ossrs/ossrs.module';
 import { TeachersModule } from 'src/teachers/teachers.module';
+import { JobsModule } from 'src/jobs/jobs.module';
 
 @Module({
   imports: [

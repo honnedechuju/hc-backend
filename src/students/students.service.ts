@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Role } from '../../auth/role.enum';
-import { User } from '../../auth/user.entity';
-import { CustomersRepository } from '../customers.repository';
+import { Role } from '../auth/role.enum';
+import { User } from '../auth/user.entity';
+import { CustomersRepository } from '../customers/customers.repository';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { Student } from './student.entity';

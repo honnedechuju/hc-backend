@@ -8,8 +8,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
-import { ContractsService } from '../customers/contracts/contracts.service';
-import { PaymentsService } from '../customers/payments/payments.service';
+import { ContractsService } from '../contracts/contracts.service';
+import { PaymentsService } from '../payments/payments.service';
 
 @Injectable()
 export class StripeService {

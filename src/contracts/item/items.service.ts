@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Student } from '../../../customers/students/student.entity';
+import { Student } from '../../students/student.entity';
 import Stripe from 'stripe';
 import { Contract } from '../contract.entity';
 import { ItemType } from './item-type.enum';

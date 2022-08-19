@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Question } from '../questions/question.entity';
 import { Task } from '../tasks/task.entity';
-import { Answer } from '../tasks/answers/answer.entity';
+import { Answer } from '../answers/answer.entity';
 
 @Entity()
 export class Video {

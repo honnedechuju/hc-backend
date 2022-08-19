@@ -27,8 +27,8 @@ export class User {
   @Column()
   email: string;
 
-  @Column()
-  lineId: string;
+  @Column({ nullable: true })
+  lineUserId: string;
 
   @Column({
     type: 'enum',

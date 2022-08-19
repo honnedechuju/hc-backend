@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from '../../auth/auth.module';
-import { VideosRepository } from '../../videos/videos.repository';
-import { TasksRepository } from '../tasks.repository';
+import { AuthModule } from '../auth/auth.module';
+import { VideosRepository } from '../videos/videos.repository';
+import { TasksRepository } from '../tasks/tasks.repository';
 import { AnswersController } from './answers.controller';
 import { AnswersRepository } from './answers.repository';
 import { AnswersService } from './answers.service';

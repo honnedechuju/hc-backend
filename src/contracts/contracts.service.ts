@@ -7,14 +7,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Permission } from '../../auth/permission.enum';
+import { Permission } from '../auth/permission.enum';
 import Stripe from 'stripe';
 
-import { Role } from '../../auth/role.enum';
-import { User } from '../../auth/user.entity';
-import { UsersRepository } from '../../auth/users.repository';
-import { StripeService } from '../../stripe/stripe.service';
-import { CustomersRepository } from '../customers.repository';
+import { Role } from '../auth/role.enum';
+import { User } from '../auth/user.entity';
+import { UsersRepository } from '../auth/users.repository';
+import { StripeService } from '../stripe/stripe.service';
+import { CustomersRepository } from '../customers/customers.repository';
 import { StudentsRepository } from '../students/students.repository';
 import { StudentsService } from '../students/students.service';
 import { ContractStatus } from './contract-status.enum';

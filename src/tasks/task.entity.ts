@@ -10,8 +10,8 @@ import {
 } from 'typeorm';
 import { Question } from '../questions/question.entity';
 import { Teacher } from '../teachers/teacher.entity';
-import { Answer } from './answers/answer.entity';
-import { OSSR } from './ossrs/ossr.entity';
+import { Answer } from '../answers/answer.entity';
+import { OSSR } from '../ossrs/ossr.entity';
 import { TaskStatus } from './task-status.enum';
 import { TaskType } from './task-type.enum';
 

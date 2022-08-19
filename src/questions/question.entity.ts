@@ -1,9 +1,9 @@
 import { Exclude } from 'class-transformer';
-import { Contract } from '../customers/contracts/contract.entity';
+import { Contract } from '../contracts/contract.entity';
 import { Customer } from '../customers/customer.entity';
-import { Student } from '../customers/students/student.entity';
+import { Student } from '../students/student.entity';
 import { Image } from '../images/image.entity';
-import { Answer } from '../tasks/answers/answer.entity';
+import { Answer } from '../answers/answer.entity';
 import { Task } from '../tasks/task.entity';
 import {
   Column,

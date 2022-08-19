@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { CustomersRepository } from '../customers/customers.repository';
-import { StudentsRepository } from '../customers/students/students.repository';
+import { StudentsRepository } from '../students/students.repository';
 import { TeachersRepository } from '../teachers/teachers.repository';
 import JwtPayload from './jwt-payload.interface';
 import { Role } from './role.enum';
@@ -42,10 +42,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       case Role.NONE:
         break;
       case Role.CUSTOMER:
-        user.customer = await this.customersRepository.findOne({ user });
+        const customer = await this.customersRepository.findOne({ user });
+        if (!customer) {
+          throw new UnauthorizedException();
+        }
+        user.customer = customer;
         break;
       case Role.TEACHER:
-        user.teacher = await this.teachersRepository.findOne({ user });
+        const teacher = await this.teachersRepository.findOne({ user });
+        if (!teacher) {
+          throw new UnauthorizedException();
+        }
+        user.teacher = teacher;
         break;
       case Role.ADMIN:
         break;
@@ -53,12 +61,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         break;
     }
 
-    if (payload.studentId) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
-      user.student = await this.studentsRepository.findOne(payload.studentId);
-    }
-
-    return user as User;
+    return user;
   }
 }

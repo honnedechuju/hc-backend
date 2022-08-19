@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../auth/user.entity';
 import { GetTasksFilterDto } from './dto/get-tasks-fliter.dto';
@@ -9,9 +9,11 @@ import { TasksRepository } from './tasks.repository';
 import { Equal } from 'typeorm';
 import { Question } from 'src/questions/question.entity';
 import { TeachersService } from 'src/teachers/teachers.service';
+import { TaskStatus } from './task-status.enum';
 
 @Injectable()
 export class TasksService {
+  private logger = new Logger(TasksService.name);
   constructor(
     @InjectRepository(TasksRepository)
     private tasksRepository: TasksRepository,
@@ -57,14 +59,47 @@ export class TasksService {
 
   getDueDate() {
     const now = new Date();
-    const nextDay = new Date();
-    nextDay.setDate(now.getDate() + 1);
-    if (nextDay.getHours() < 8) {
-      nextDay.setHours(10);
-    } else if (22 < nextDay.getHours()) {
-      nextDay.setDate(nextDay.getDate() + 1);
-      nextDay.setHours(8);
+    const dueDate = new Date();
+    dueDate.setDate(now.getDate() + 1);
+    if (dueDate.getHours() < 10) {
+      dueDate.setHours(10);
+    } else if (22 < dueDate.getHours()) {
+      dueDate.setDate(dueDate.getDate() + 1);
+      dueDate.setHours(10);
     }
-    return nextDay;
+    return dueDate;
+  }
+
+  getCheckMilliSeconds() {
+    const now = new Date();
+    const dateInThreeHours = new Date();
+    dateInThreeHours.setHours(now.getHours() + 3);
+    if (dateInThreeHours.getHours() < 10) {
+      dateInThreeHours.setHours(13);
+    } else if (22 < dateInThreeHours.getHours()) {
+      dateInThreeHours.setDate(dateInThreeHours.getDate() + 1);
+      dateInThreeHours.setHours(13);
+    }
+    return dateInThreeHours.getMilliseconds() - now.getMilliseconds();
+  }
+
+  async checkPendingTaskById(taskId: string) {
+    const found = await this.tasksRepository.findOne(taskId);
+    if (!found) {
+      this.logger.error(
+        `Task not found when checking pending task with ID "${taskId}"`,
+      );
+    }
+    if (found.status !== TaskStatus.PENDING) {
+      return;
+    }
+    await this.reassignTask(found);
+  }
+
+  async reassignTask(task: Task) {
+    await this.tasksRepository.update(task.id, {
+      status: TaskStatus.REJECTED,
+    });
+    await this.createTaskFromQuestion(task.question);
   }
 }

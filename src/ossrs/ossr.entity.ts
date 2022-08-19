@@ -1,4 +1,4 @@
-import { Student } from 'src/customers/students/student.entity';
+import { Student } from 'src/students/student.entity';
 import { Teacher } from 'src/teachers/teacher.entity';
 import {
   Column,
@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Task } from '../task.entity';
+import { Task } from '../tasks/task.entity';
 
 @Entity()
 export class OSSR {

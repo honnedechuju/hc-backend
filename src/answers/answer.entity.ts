@@ -1,7 +1,7 @@
 import { Exclude } from 'class-transformer';
-import { Question } from '../../questions/question.entity';
-import { Teacher } from '../../teachers/teacher.entity';
-import { Video } from '../../videos/video.entity';
+import { Question } from '../questions/question.entity';
+import { Teacher } from '../teachers/teacher.entity';
+import { Video } from '../videos/video.entity';
 import {
   Column,
   CreateDateColumn,
@@ -10,7 +10,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Task } from '../task.entity';
+import { Task } from '../tasks/task.entity';
 import { AnswerStatus } from './answer-status.enum';
 
 @Entity()

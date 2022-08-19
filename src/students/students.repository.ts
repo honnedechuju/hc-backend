@@ -1,6 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, Repository } from 'typeorm';
-import { Customer } from '../customer.entity';
+import { Customer } from '../customers/customer.entity';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { Student } from './student.entity';
 

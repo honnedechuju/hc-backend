@@ -1,4 +1,4 @@
-import { Question } from '../../questions/question.entity';
+import { Question } from '../questions/question.entity';
 import {
   Column,
   CreateDateColumn,
@@ -8,7 +8,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Customer } from '../customer.entity';
+import { Customer } from '../customers/customer.entity';
 import { Payment } from '../payments/payment.entity';
 import { Student } from '../students/student.entity';
 import { ContractStatus } from './contract-status.enum';

@@ -7,5 +7,6 @@ import { ConfigModule } from '@nestjs/config';
   imports: [ConfigModule],
   providers: [LineService],
   controllers: [LineController],
+  exports: [LineService],
 })
 export class LineModule {}

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -6,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -14,26 +16,28 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Role } from '../auth/role.enum';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/user.entity';
-import { CreatePaymentMethodDto } from './contracts/dto/create-payment-method.dto';
+import { CreatePaymentMethodDto } from '../contracts/dto/create-payment-method.dto';
 import { Customer } from './customer.entity';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { AuthService } from '../auth/auth.service';
 
 @Controller('customers')
 @UseGuards(AuthGuard())
 export class CustomersController {
-  constructor(
-    private customersService: CustomersService,
-    private authService: AuthService,
-  ) {}
+  constructor(private customersService: CustomersService) {}
 
   @Get()
   @UseGuards(RolesGuard)
   @Roles([Role.ADMIN, Role.CUSTOMER])
   async getCustomer(@GetUser() user: User): Promise<Customer | Customer[]> {
-    return this.customersService.getCustomer(user);
+    if (user.role === Role.CUSTOMER) {
+      return user.customer;
+    } else if (user.role === Role.ADMIN) {
+      return this.customersService.adminGetCustomer();
+    } else {
+      throw new BadRequestException(`No permission`);
+    }
   }
 
   @Post()
@@ -43,65 +47,121 @@ export class CustomersController {
     @Body() createCustomerDto: CreateCustomerDto,
     @GetUser() user: User,
   ): Promise<void> {
-    await this.customersService.createCustomer(createCustomerDto, user);
+    if (user.role === Role.NONE) {
+      await this.customersService.createCustomer(createCustomerDto, user);
+    } else if (user.role === Role.ADMIN) {
+      await this.customersService.adminCreateCustomer(createCustomerDto);
+    } else {
+      throw new BadRequestException(`No permission`);
+    }
   }
 
   @Get('/:id/')
   @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN, Role.CUSTOMER])
+  @Roles([Role.CUSTOMER, Role.ADMIN])
   async getCustomerById(
     @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<Customer> {
-    return this.customersService.getCustomerById(id, user);
+    if (user.role === Role.CUSTOMER) {
+      if (user.customer.id !== id) {
+        throw new UnauthorizedException();
+      } else {
+        return user.customer;
+      }
+    } else if (user.role === Role.ADMIN) {
+      return this.customersService.getCustomerById(id);
+    } else {
+      throw new BadRequestException(`No permission`);
+    }
   }
 
   @Patch('/:id/')
   @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN, Role.CUSTOMER])
+  @Roles([Role.CUSTOMER, Role.ADMIN])
   async updateCustomerById(
     @Param('id') id: string,
     @Body() updateCustomerDto: UpdateCustomerDto,
     @GetUser() user: User,
   ): Promise<void> {
-    delete updateCustomerDto.stripeId;
-    await this.customersService.updateCustomerById(id, updateCustomerDto, user);
+    if (user.role === Role.CUSTOMER) {
+      if (user.customer.id !== id) {
+        throw new UnauthorizedException();
+      } else {
+        await this.customersService.updateCustomerById(id, updateCustomerDto);
+      }
+    } else if (user.role === Role.ADMIN) {
+      await this.customersService.updateCustomerById(id, updateCustomerDto);
+    } else {
+      throw new BadRequestException(`No permission`);
+    }
   }
 
   @Get('/:id/payment-methods/')
   @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN, Role.CUSTOMER])
+  @Roles([Role.CUSTOMER, Role.ADMIN])
   async getPaymentMethods(@Param('id') id: string, @GetUser() user: User) {
-    return this.customersService.getPaymentMethods(id, user);
+    if (user.role === Role.CUSTOMER) {
+      if (user.customer.id !== id) {
+        throw new UnauthorizedException();
+      } else {
+        return this.customersService.getPaymentMethods(id);
+      }
+    } else if (user.role === Role.ADMIN) {
+      return this.customersService.getPaymentMethods(id);
+    } else {
+      throw new BadRequestException();
+    }
   }
 
   @Post('/:id/payment-methods/')
   @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN, Role.CUSTOMER])
+  @Roles([Role.CUSTOMER, Role.ADMIN])
   async postPaymentMethods(
     @Param('id') id: string,
     @Body() createPaymentMethodDto: CreatePaymentMethodDto,
     @GetUser() user: User,
   ) {
-    return this.customersService.postPaymentMethod(
-      id,
-      createPaymentMethodDto,
-      user,
-    );
+    if (user.role === Role.CUSTOMER) {
+      if (user.customer.id !== id) {
+        throw new UnauthorizedException();
+      } else {
+        return this.customersService.postPaymentMethod(
+          id,
+          createPaymentMethodDto,
+        );
+      }
+    } else if (user.role === Role.ADMIN) {
+      return this.customersService.postPaymentMethod(
+        id,
+        createPaymentMethodDto,
+      );
+    } else {
+      throw new BadRequestException();
+    }
   }
 
-  @Delete('/:customerId/payment-methods/:paymentMethodId')
+  @Delete('/:id/payment-methods/:paymentMethodId')
   @UseGuards(RolesGuard)
   @Roles([Role.ADMIN, Role.CUSTOMER])
   async deletePaymentMethods(
-    @Param('customerId') customerId: string,
+    @Param('id') id: string,
     @Param('paymentMethodId') paymentMethodId: string,
     @GetUser() user: User,
   ) {
-    return this.customersService.deletePaymentMethodById(
-      customerId,
-      paymentMethodId,
-      user,
-    );
+    if (user.role === Role.CUSTOMER) {
+      if (user.customer.id !== id) {
+        throw new UnauthorizedException();
+      } else {
+        return this.customersService.deletePaymentMethodById(
+          id,
+          paymentMethodId,
+        );
+      }
+    } else if (user.role === Role.ADMIN) {
+      return this.customersService.deletePaymentMethodById(id, paymentMethodId);
+    } else {
+      throw new BadRequestException();
+    }
   }
 }

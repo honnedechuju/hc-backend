@@ -8,9 +8,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../auth/user.entity';
-import { Contract } from './contracts/contract.entity';
-import { Payment } from './payments/payment.entity';
-import { Student } from './students/student.entity';
+import { Contract } from '../contracts/contract.entity';
+import { Payment } from '../payments/payment.entity';
+import { Student } from '../students/student.entity';
 
 @Entity()
 export class Customer {

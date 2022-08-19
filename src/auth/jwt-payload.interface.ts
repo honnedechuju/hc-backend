@@ -6,5 +6,4 @@ export default interface JwtPayload {
   username: string;
   role: Role;
   permissions: Permission[];
-  studentId?: string;
 }

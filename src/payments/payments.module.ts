@@ -4,7 +4,7 @@ import { PaymentsController } from './payments.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PaymentsRepository } from './payments.repository';
 import { ContractsRepository } from '../contracts/contracts.repository';
-import { CustomersRepository } from '../customers.repository';
+import { CustomersRepository } from '../customers/customers.repository';
 
 @Module({
   imports: [

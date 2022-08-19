@@ -20,7 +20,7 @@ export class UsersRepository extends Repository<User> {
       username,
       password: hashedPassword,
       email,
-      lineId: '',
+      lineUserId: '',
     });
 
     try {
@@ -44,7 +44,7 @@ export class UsersRepository extends Repository<User> {
       updatedValues.password = hashedPassword;
     }
     try {
-      const newUser = await this.update(user.id, updatedValues);
+      await this.update(user.id, updatedValues);
     } catch (error) {
       if (error.code === '23505') {
         throw new ConflictException('Username already exists');

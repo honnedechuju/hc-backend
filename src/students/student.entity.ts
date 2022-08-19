@@ -1,4 +1,4 @@
-import { Question } from '../../questions/question.entity';
+import { Question } from '../questions/question.entity';
 import {
   Column,
   Entity,
@@ -10,8 +10,9 @@ import {
 } from 'typeorm';
 import { Contract } from '../contracts/contract.entity';
 import { Item } from '../contracts/item/item.entity';
-import { Customer } from '../customer.entity';
-import { OSSR } from 'src/tasks/ossrs/ossr.entity';
+import { Customer } from '../customers/customer.entity';
+import { OSSR } from 'src/ossrs/ossr.entity';
+import { StudentService } from './student-service.enum';
 @Entity()
 export class Student {
   @PrimaryGeneratedColumn('uuid')
@@ -40,6 +41,14 @@ export class Student {
 
   @Column()
   publicSchool: string;
+
+  @Column({
+    type: 'enum',
+    enum: StudentService,
+    default: [],
+    array: true,
+  })
+  services: StudentService[];
 
   @Column({ type: 'numeric', nullable: true })
   count: number;

@@ -5,7 +5,7 @@ import { GetQuestionsFilterDto } from './dto/get-questions-fliter.dto';
 import { Question } from './question.entity';
 import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { Customer } from '../customers/customer.entity';
-import { Student } from '../customers/students/student.entity';
+import { Student } from '../students/student.entity';
 import { Image } from '../images/image.entity';
 
 @EntityRepository(Question)

@@ -38,8 +38,4 @@ export class UpdateCustomerDto {
   @Type(() => Date)
   @IsDate()
   birthday?: Date;
-
-  @IsOptional()
-  @IsString()
-  stripeId?: string;
 }

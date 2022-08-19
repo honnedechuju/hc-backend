@@ -2,7 +2,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { EntityRepository, Repository } from 'typeorm';
 import { Contract } from '../contracts/contract.entity';
-import { Customer } from '../customer.entity';
+import { Customer } from '../customers/customer.entity';
 import { Payment } from './payment.entity';
 
 @EntityRepository(Payment)

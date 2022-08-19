@@ -11,7 +11,7 @@ import { CustomersService } from '../customers/customers.service';
 import { CustomersRepository } from '../customers/customers.repository';
 import { TeachersRepository } from '../teachers/teachers.repository';
 import { TeachersService } from '../teachers/teachers.service';
-import { StudentsRepository } from '../customers/students/students.repository';
+import { StudentsRepository } from '../students/students.repository';
 
 @Module({
   imports: [

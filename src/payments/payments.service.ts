@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Stripe from 'stripe';
 import { ContractsRepository } from '../contracts/contracts.repository';
-import { CustomersRepository } from '../customers.repository';
+import { CustomersRepository } from '../customers/customers.repository';
 import { PaymentsRepository } from './payments.repository';
 
 @Injectable()

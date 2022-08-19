@@ -36,15 +36,6 @@ export class AuthController {
     return this.authService.signIn(authCredentialsDto);
   }
 
-  @Get('')
-  @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN])
-  @UseGuards(AuthGuard())
-  async getAuth(@Req() req): Promise<User[]> {
-    console.log(req.user);
-    return this.authService.getAllUsers();
-  }
-
   @Get('/:id')
   @UseGuards(AuthGuard())
   async getAuthById(
@@ -54,14 +45,14 @@ export class AuthController {
     return this.authService.getUserById(id, user);
   }
 
-  @Patch('/:id')
-  @UseGuards(AuthGuard())
-  async updateAuthById(
-    @GetUser() user: User,
-    @Param() id: string,
-    @Query('otp') oneTimePassword: string,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
-    return this.authService.updateUserById(id, updateUserDto, user);
-  }
+  // @Patch('/:id')
+  // @UseGuards(AuthGuard())
+  // async updateAuthById(
+  //   @GetUser() user: User,
+  //   @Param() id: string,
+  //   @Query('otp') oneTimePassword: string,
+  //   @Body() updateUserDto: UpdateUserDto,
+  // ) {
+  //   return this.authService.updateUserById(id, updateUserDto, user);
+  // }
 }
