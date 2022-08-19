@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -6,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -18,6 +20,7 @@ import { Contract } from './contract.entity';
 import { ContractsService } from './contracts.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
+import { GetContractsFilterDto } from './dto/get-contracts-filter.dto';
 
 @Controller('contracts')
 @UseGuards(AuthGuard())
@@ -26,9 +29,18 @@ export class ContractsController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN, Role.CUSTOMER])
-  async getContracts(@GetUser() user: User): Promise<Contract[]> {
-    return this.contractsService.getContracts(user);
+  @Roles([Role.CUSTOMER, Role.ADMIN])
+  async getContracts(
+    @Query() filterDto: GetContractsFilterDto,
+    @GetUser() user: User,
+  ): Promise<Contract[]> {
+    if (user.role === Role.CUSTOMER) {
+      return this.contractsService.getContracts(filterDto, user);
+    } else if (user.role === Role.ADMIN) {
+      return this.contractsService.getContracts(filterDto);
+    } else {
+      throw new BadRequestException();
+    }
   }
 
   @Post()
@@ -36,8 +48,13 @@ export class ContractsController {
     @GetUser() user: User,
     @Body() createContractDto: CreateContractDto,
   ): Promise<void> {
-    console.log(createContractDto);
-    return this.contractsService.createContract(createContractDto, user);
+    if (user.role === Role.CUSTOMER) {
+      return this.contractsService.createContract(createContractDto, user);
+    } else if (user.role === Role.ADMIN) {
+      return this.contractsService.createContract(createContractDto);
+    } else {
+      throw new BadRequestException();
+    }
   }
 
   @Get(':id')

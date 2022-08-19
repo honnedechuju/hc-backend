@@ -37,11 +37,6 @@ export class QuestionsController {
     @Query() filterDto: GetQuestionsFilterDto,
     @GetUser() user: User,
   ): Promise<Question[]> {
-    this.logger.verbose(
-      `User "${
-        user.username
-      }" retrieving all questions. Filters: ${JSON.stringify(filterDto)}`,
-    );
     return this.questionsService.getQuestions(filterDto, user);
   }
 

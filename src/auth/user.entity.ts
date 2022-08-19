@@ -12,6 +12,7 @@ import { Role } from './role.enum';
 import { Teacher } from '../teachers/teacher.entity';
 import { Permission } from './permission.enum';
 import { Image } from '../images/image.entity';
+import { Video } from 'src/videos/video.entity';
 
 @Entity()
 export class User {
@@ -47,6 +48,9 @@ export class User {
 
   @OneToMany(() => Image, (image) => image.user)
   images: Image[];
+
+  @OneToMany(() => Video, (video) => video.user)
+  videos: Video[];
 
   @OneToOne(() => Customer, (customer) => customer.user, {
     cascade: true,

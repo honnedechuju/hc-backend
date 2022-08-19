@@ -34,7 +34,7 @@ export class CustomersController {
     if (user.role === Role.CUSTOMER) {
       return user.customer;
     } else if (user.role === Role.ADMIN) {
-      return this.customersService.adminGetCustomer();
+      return this.customersService.getCustomer();
     } else {
       throw new BadRequestException(`No permission`);
     }
@@ -50,7 +50,7 @@ export class CustomersController {
     if (user.role === Role.NONE) {
       await this.customersService.createCustomer(createCustomerDto, user);
     } else if (user.role === Role.ADMIN) {
-      await this.customersService.adminCreateCustomer(createCustomerDto);
+      await this.customersService.createCustomer(createCustomerDto);
     } else {
       throw new BadRequestException(`No permission`);
     }

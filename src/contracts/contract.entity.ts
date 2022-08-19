@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Customer } from '../customers/customer.entity';
 import { Payment } from '../payments/payment.entity';
@@ -20,7 +21,10 @@ export class Contract {
   id: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  timestamp: Date;
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt: Date;
 
   @Column({ type: 'numeric' })
   amount: number;
@@ -47,8 +51,8 @@ export class Contract {
   @OneToMany(() => Payment, (payment) => payment.contract)
   payments: Payment[];
 
-  @ManyToMany(() => Student, (student) => student.contracts)
-  students: Student[];
+  @ManyToOne(() => Student, (student) => student.contracts, { eager: true })
+  student: Student;
 
   @ManyToOne(() => Customer, (customer) => customer.contracts, { eager: true })
   customer: Customer;

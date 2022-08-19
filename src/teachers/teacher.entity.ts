@@ -1,4 +1,5 @@
 import { Reward } from 'src/rewards/reward.entity';
+import { Video } from 'src/videos/video.entity';
 import {
   Column,
   Entity,
@@ -56,6 +57,9 @@ export class Teacher {
 
   @OneToMany(() => Reward, (reward) => reward.teacher)
   rewards: Reward[];
+
+  @OneToMany(() => Video, (video) => video.teacher)
+  videos: Video[];
 
   @OneToOne(() => User, (user) => user.teacher, { eager: false })
   @JoinColumn()

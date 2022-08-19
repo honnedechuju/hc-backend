@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -24,11 +26,15 @@ export class CustomersService {
     private customersRepository: CustomersRepository,
     @InjectRepository(UsersRepository)
     private usersRepository: UsersRepository,
+    @Inject(forwardRef(() => StripeService))
     private stripeService: StripeService,
     private connection: Connection,
   ) {}
 
-  async getCustomer(user: User): Promise<Customer> {
+  async getCustomer(user?: User): Promise<Customer | Customer[]> {
+    if (!user) {
+      return this.customersRepository.find();
+    }
     const found = await this.customersRepository.findOne({ user });
     if (!found) {
       throw new NotFoundException(
@@ -38,14 +44,18 @@ export class CustomersService {
     return found;
   }
 
-  async adminGetCustomer(): Promise<Customer[]> {
-    return this.customersRepository.find();
-  }
-
   async createCustomer(
     createCustomerDto: CreateCustomerDto,
-    user: User,
+    user?: User,
   ): Promise<void> {
+    if (!user) {
+      const { userId } = createCustomerDto;
+      const found = await this.usersRepository.findOne(userId);
+      if (!found) {
+        throw new NotFoundException(`User with ID "${userId}" not found`);
+      }
+      user = found;
+    }
     const found = await this.customersRepository.findOne({ user });
     if (found || user.role !== Role.NONE) {
       throw new BadRequestException('Customer is already registered.');
@@ -80,15 +90,6 @@ export class CustomersService {
     } finally {
       await queryRunner.release();
     }
-  }
-
-  async adminCreateCustomer(createCustomerDto: CreateCustomerDto) {
-    const { userId } = createCustomerDto;
-    const found = await this.usersRepository.findOne(userId);
-    if (!found) {
-      throw new NotFoundException(`User with ID "${userId}" not found`);
-    }
-    await this.createCustomer(createCustomerDto, found);
   }
 
   async getCustomerById(id: string): Promise<Customer> {

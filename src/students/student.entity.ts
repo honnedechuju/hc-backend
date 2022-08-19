@@ -65,8 +65,7 @@ export class Student {
   @ManyToMany(() => OSSR, (ossr) => ossr.students, { eager: false })
   ossrs: OSSR[];
 
-  @ManyToMany(() => Contract, (contract) => contract.students, { eager: false })
-  @JoinTable()
+  @OneToMany(() => Contract, (contract) => contract.student, { eager: false })
   contracts: Contract[];
 
   @ManyToOne(() => Customer, (customer) => customer.students, { eager: true })

@@ -21,19 +21,17 @@ import { LineModule } from 'src/line/line.module';
     TypeOrmModule.forFeature([
       QuestionsRepository,
       StudentsRepository,
-      CustomersRepository,
       UsersRepository,
       ImagesRepository,
       TasksRepository,
     ]),
     AuthModule,
     StudentsModule,
-    CustomersModule,
     TasksModule,
     LineModule,
     JobsModule,
   ],
   controllers: [QuestionsController],
-  providers: [QuestionsService, CustomersService],
+  providers: [QuestionsService],
 })
 export class QuestionsModule {}

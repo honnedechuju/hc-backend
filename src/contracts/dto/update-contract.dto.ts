@@ -18,4 +18,8 @@ export class UpdateContractDto {
   @IsOptional()
   @ValidateNested()
   items?: CreateItemDto[];
+
+  @IsOptional()
+  @IsString()
+  customerId?: string;
 }

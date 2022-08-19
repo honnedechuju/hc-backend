@@ -10,6 +10,7 @@ import Stripe from 'stripe';
 import { Request, Response } from 'express';
 import { ContractsService } from '../contracts/contracts.service';
 import { PaymentsService } from '../payments/payments.service';
+import { CustomersService } from 'src/customers/customers.service';
 
 @Injectable()
 export class StripeService {
@@ -18,6 +19,8 @@ export class StripeService {
   constructor(
     private configService: ConfigService,
     private paymentsService: PaymentsService,
+    @Inject(forwardRef(() => CustomersService))
+    private customersService: CustomersService,
     @Inject(forwardRef(() => ContractsService))
     private contractsService: ContractsService,
   ) {

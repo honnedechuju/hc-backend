@@ -16,6 +16,7 @@ import { VideosModule } from './videos/videos.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { LineModule } from './line/line.module';
 import { JobsModule } from './jobs/jobs.module';
+import { ContractsModule } from './contracts/contracts.module';
 
 @Module({
   imports: [
@@ -38,12 +39,13 @@ import { JobsModule } from './jobs/jobs.module';
       }),
     }),
     ScheduleModule.forRoot(),
-    QuestionsModule,
     AuthModule,
-    TasksModule,
     CustomersModule,
     StudentsModule,
     TeachersModule,
+    QuestionsModule,
+    TasksModule,
+    ContractsModule,
     PaymentsModule,
     ImagesModule,
     VideosModule,

@@ -5,9 +5,11 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Contract } from '../contract.entity';
 import { ItemType } from './item-type.enum';
+import { ItemStatus } from './item-status.enum';
 
 @Entity()
 export class Item {
@@ -15,7 +17,10 @@ export class Item {
   id: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  timestamp: Date;
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt: Date;
 
   @Column({ type: 'numeric' })
   price: number;
@@ -25,6 +30,13 @@ export class Item {
     enum: ItemType,
   })
   type: ItemType;
+
+  @Column({
+    type: 'enum',
+    enum: ItemStatus,
+    default: ItemStatus.ATTACHED,
+  })
+  status: ItemStatus;
 
   @Column()
   stripePriceId: string;

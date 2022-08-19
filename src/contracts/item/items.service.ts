@@ -16,22 +16,7 @@ export class ItemsService {
     private itemsRepository: ItemsRepository,
   ) {}
 
-  // getItemTypeFromStripePriceId(stripePriceId: string) {
-  //   switch (stripePriceId) {
-  //     case this.configService.get(`STRIPE_PRICE_ID_${ItemType.LIMITED}`):
-  //       return ItemType.LIMITED;
-  //     case this.configService.get(`STRIPE_PRICE_ID_${ItemType.UNLIMITED}`):
-  //       return ItemType.UNLIMITED;
-  //     case this.configService.get(`STRIPE_PRICE_ID_${ItemType.TUTOR}`):
-  //       return ItemType.TUTOR;
-  //     default:
-  //       throw new NotFoundException(
-  //         `Stripe Price ID with "${stripePriceId}" not found.`,
-  //       );
-  //   }
-  // }
-
-  async createItem(type: ItemType, student?: Student, contract?: Contract) {
+  createItem(type: ItemType, student?: Student, contract?: Contract) {
     let item: Item;
     switch (type) {
       case ItemType.LIMITED:
@@ -63,10 +48,10 @@ export class ItemsService {
       default:
         throw new NotFoundException();
     }
-    return await this.itemsRepository.save(item);
+    return item;
   }
 
-  async saveItemsFromStripeItems(
+  getUpdatedItemsFromStripeItems(
     items: Item[],
     stripeItems: Stripe.ApiList<Stripe.SubscriptionItem>,
   ) {
@@ -77,12 +62,12 @@ export class ItemsService {
       );
       item.stripePriceId = stripeItem.price.id;
       item.stripeItemId = stripeItem.id;
-      resultItems.push(await this.itemsRepository.save(item));
+      resultItems.push(item);
     }
     return resultItems;
   }
 
-  getStripeSubscriptionCreateParamsItem(items: Item[]) {
+  getStripeSubscriptionCreateParamsItems(items: Item[]) {
     return items.map(
       (item): Stripe.SubscriptionCreateParams.Item => ({
         price: this.configService.get(`STRIPE_PRICE_ID_${item.type}`),
@@ -93,4 +78,19 @@ export class ItemsService {
       }),
     );
   }
+
+  // getItemTypeFromStripePriceId(stripePriceId: string) {
+  //   switch (stripePriceId) {
+  //     case this.configService.get(`STRIPE_PRICE_ID_${ItemType.LIMITED}`):
+  //       return ItemType.LIMITED;
+  //     case this.configService.get(`STRIPE_PRICE_ID_${ItemType.UNLIMITED}`):
+  //       return ItemType.UNLIMITED;
+  //     case this.configService.get(`STRIPE_PRICE_ID_${ItemType.TUTOR}`):
+  //       return ItemType.TUTOR;
+  //     default:
+  //       throw new NotFoundException(
+  //         `Stripe Price ID with "${stripePriceId}" not found.`,
+  //       );
+  //   }
+  // }
 }

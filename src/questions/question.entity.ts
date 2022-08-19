@@ -71,6 +71,7 @@ export class Question {
   @Exclude({ toPlainOnly: false })
   student: Student;
 
-  @ManyToOne(() => Customer, (customer) => customer.questions)
+  @ManyToOne(() => Customer, (customer) => customer.questions, { eager: true })
+  @Exclude({ toPlainOnly: true })
   customer: Customer;
 }

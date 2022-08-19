@@ -14,7 +14,6 @@ import { GetQuestionsFilterDto } from './dto/get-questions-fliter.dto';
 import { QuestionsRepository } from './questions.repository';
 import { Question } from './question.entity';
 import { User } from '../auth/user.entity';
-import { CustomersRepository } from '../customers/customers.repository';
 import { StudentsRepository } from '../students/students.repository';
 import { ImagesRepository } from '../images/images.repository';
 import { Image } from '../images/image.entity';
@@ -31,8 +30,6 @@ export class QuestionsService {
     private imagesRepository: ImagesRepository,
     @InjectRepository(QuestionsRepository)
     private questionsRepository: QuestionsRepository,
-    @InjectRepository(CustomersRepository)
-    private customersRepository: CustomersRepository,
     @InjectRepository(StudentsRepository)
     private studentsRepository: StudentsRepository,
     private tasksService: TasksService,
@@ -48,14 +45,18 @@ export class QuestionsService {
     return this.questionsRepository.getQuestions(filterDto, user);
   }
 
-  async getQuestionById(id: string, user: User): Promise<Question> {
-    const customer = await this.customersRepository.findOne({ user });
-    const found = this.questionsRepository.findOne({
-      where: { id, customer },
+  async getQuestionById(id: string, user?: User): Promise<Question> {
+    const found = await this.questionsRepository.findOne({
+      id,
     });
 
     if (!found) {
       throw new NotFoundException(`Question with ID "${id}" not found`);
+    }
+    if (user) {
+      if (found.customer.id !== user.customer.id) {
+        throw new NotFoundException(`Question with ID "${id}" not found`);
+      }
     }
     return found;
   }
@@ -166,11 +167,10 @@ export class QuestionsService {
     }
   }
 
-  async deleteQuestion(id: string, user: User): Promise<void> {
-    const customer = await this.customersRepository.findOne({ user });
+  async deleteQuestion(id: string, user?: User): Promise<void> {
     const result = await this.questionsRepository.delete({
       id,
-      customer,
+      customer: user ? user.customer : null,
     });
 
     if (result.affected === 0) {
