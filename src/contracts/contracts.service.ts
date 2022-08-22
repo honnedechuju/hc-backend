@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -14,8 +15,6 @@ import Stripe from 'stripe';
 import { User } from '../auth/user.entity';
 import { UsersRepository } from '../auth/users.repository';
 import { StripeService } from '../stripe/stripe.service';
-import { CustomersRepository } from '../customers/customers.repository';
-import { StudentsRepository } from '../students/students.repository';
 import { StudentsService } from '../students/students.service';
 import { ContractStatus } from './contract-status.enum';
 import { ContractType } from './contract-type.enum';
@@ -30,6 +29,8 @@ import { GetContractsFilterDto } from './dto/get-contracts-filter.dto';
 import { Connection } from 'typeorm';
 import { Customer } from 'src/customers/customer.entity';
 import { CustomersService } from 'src/customers/customers.service';
+import { ItemStatus } from './item/item-status.enum';
+import { PaymentsService } from 'src/payments/payments.service';
 
 @Injectable()
 export class ContractsService {
@@ -40,12 +41,11 @@ export class ContractsService {
     private contractsRepository: ContractsRepository,
     @InjectRepository(ItemsRepository)
     private itemsRepository: ItemsRepository,
-    @InjectRepository(CustomersRepository)
-    private customersRepository: CustomersRepository,
 
     private configService: ConfigService,
     private studentsService: StudentsService,
     private itemsService: ItemsService,
+    private paymentsService: PaymentsService,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @Inject(forwardRef(() => StripeService))
@@ -59,9 +59,17 @@ export class ContractsService {
     user?: User,
   ): Promise<Contract[]> {
     if (!user) {
-      return this.contractsRepository.find();
+      const { customerId } = filterDto;
+      if (!customerId) {
+        throw new NotAcceptableException();
+      } else {
+        const customer = await this.customersService.getCustomerById(
+          customerId,
+        );
+        return this.contractsRepository.getContracts(filterDto, customer);
+      }
     } else {
-      return this.contractsRepository.find({ customer: user.customer });
+      return this.contractsRepository.getContracts(filterDto, user.customer);
     }
   }
 
@@ -74,13 +82,9 @@ export class ContractsService {
       if (!createContractDto?.customerId) {
         throw new BadRequestException();
       }
-      const found = await this.customersRepository.findOne(
+      customer = await this.customersService.getCustomerById(
         createContractDto?.customerId,
       );
-      if (!found) {
-        throw new NotFoundException();
-      }
-      customer = found;
     } else {
       customer = user.customer;
     }
@@ -94,12 +98,27 @@ export class ContractsService {
     // checking student id and retrieving student data
     const student = await this.studentsService.getStudentById(studentId, user);
 
-    // creating Items
+    // check double contract
+    /* Only one contract can be settled per students */
+    const contracts = await this.getContracts(
+      {
+        customerId: customer.id,
+        status: ContractStatus.SETTLED,
+      },
+      user,
+    );
+    if (contracts.length !== 0) {
+      throw new BadRequestException(
+        `Student with ID "${studentId}" already has contract`,
+      );
+    }
+
+    // creating Items(not saved)
     const items = createItemsDto.map((createItemDto) => {
       return this.itemsService.createItem(createItemDto.type, student);
     });
 
-    // creating Contract
+    // creating Contract(not saved)
     const amount = items.reduce(
       (sum, current) => sum + Number(current.price),
       0,
@@ -108,6 +127,7 @@ export class ContractsService {
       amount,
       items,
       customer,
+      student,
     });
 
     // start transaction
@@ -117,12 +137,21 @@ export class ContractsService {
     await queryRunner.startTransaction();
 
     try {
+      // saving items
+      const savedItems = await queryRunner.manager.save(items);
+
+      // saving contract
+      const savedContract = await queryRunner.manager.save(contract);
+
       // creating Stripe subscription
-      const itemsParams =
-        this.itemsService.getStripeSubscriptionCreateParamsItems(items);
       const metadata = {
         contract_id: contract.id,
+        customer_id: customer.id,
+        student_id: student.id,
       };
+      const itemsParams =
+        this.itemsService.getStripeSubscriptionCreateParamsItems(savedItems);
+
       const subscription = await this.stripeService.createSubscription(
         customer.stripeCustomerId,
         paymentMethodId,
@@ -130,24 +159,20 @@ export class ContractsService {
         itemsParams,
       );
 
-      // saving contract
-      const {
-        id,
-        status,
-        current_period_start,
-        current_period_end,
-        items: stripeItems,
-      } = subscription;
-      contract.stripeSubscriptionId = id;
-      contract.lastPaymentTime = new Date(current_period_start * 1000);
-      contract.nextPaymentTime = new Date(current_period_end * 1000);
-      contract.status =
-        this.getContractStatusFromStripeSubscriptionStatus(status);
-      const savedContract = await this.connection.manager.save(contract);
+      // updateContractProps
+      const updatedContractFromStripe =
+        this.updateContractPropsFromStripeSubscription(
+          savedContract,
+          subscription,
+        );
+      const savedContractFromStripe = await queryRunner.manager.save(
+        updatedContractFromStripe,
+      );
 
       // saving items
+      const { items: stripeItems } = subscription;
       const itemsWithContract = items.map((item) => {
-        item.contract = savedContract;
+        item.contract = savedContractFromStripe;
         return item;
       });
       const itemsWithStripeInfo =
@@ -167,21 +192,32 @@ export class ContractsService {
   }
 
   async getContractById(id: string, user?: User): Promise<Contract> {
-    if (!user) {
-      const found = await this.contractsRepository.findOne({ id });
-      if (!found) {
-        throw new NotFoundException(`Contract with ID "${id}" not found`);
-      }
-      return found;
-    }
-
     const found = await this.contractsRepository.findOne({
       id,
-      customer: user.customer,
     });
     if (!found) {
       throw new NotFoundException(`Contract with ID "${id}" not found`);
     }
+    if (user && found.customer.id !== user.customer.id) {
+      throw new NotFoundException(`Contract with ID "${id}" not found`);
+    }
+    return found;
+  }
+
+  async getContractByStripeSubscriptionId(
+    stripeSubscriptionId: string,
+    user?: User,
+  ) {
+    const found = await this.contractsRepository.findOne({
+      stripeSubscriptionId,
+      customer: user.customer,
+    });
+    if (!found) {
+      throw new NotFoundException(
+        `Contract with stripe subscription ID "${stripeSubscriptionId}" not found`,
+      );
+    }
+
     return found;
   }
 
@@ -190,24 +226,23 @@ export class ContractsService {
     updateContractDto: UpdateContractDto,
     user?: User,
   ): Promise<void> {
-    let customer;
+    let customer: Customer;
     if (!user) {
       if (!updateContractDto?.customerId) {
         throw new BadRequestException();
       }
-      customer = this.customersService.getCustomerById(
+      customer = await this.customersService.getCustomerById(
         updateContractDto.customerId,
       );
     } else {
       customer = user.customer;
     }
-
     const contract = await this.getContractById(id, user);
+    delete updateContractDto?.customerId;
 
-    let params: Stripe.SubscriptionUpdateParams;
+    const { paymentMethodId, items } = updateContractDto;
 
-    if (updateContractDto?.paymentMethodId) {
-      const { paymentMethodId } = updateContractDto;
+    if (paymentMethodId) {
       const paymentMethods =
         await this.stripeService.getPaymentMethodsByCustomerId(
           customer.stripeCustomerId,
@@ -221,69 +256,152 @@ export class ContractsService {
           customer.stripeCustomerId,
         );
       }
+      const params: Stripe.SubscriptionUpdateParams = {};
       params.default_payment_method = paymentMethodId;
-    }
-
-    if (updateContractDto?.items) {
-      const { items: createItemsDto } = updateContractDto;
-      const items = await Promise.all(
-        createItemsDto.map((createItemDto) => {
-          return this.itemsService.createItem(
-            createItemDto.type,
-            contract.student,
-          );
-        }),
-      );
-      params.items =
-        this.itemsService.getStripeSubscriptionCreateParamsItems(items);
-
-      // update contract.items
-      contract.items = items;
-      await this.contractsRepository.save(contract);
-    }
-
-    let subscription: Stripe.Response<Stripe.Subscription>;
-
-    if (params) {
-      subscription = await this.stripeService.updateSubscriptionById(
+      await this.stripeService.updateSubscriptionById(
         contract.stripeSubscriptionId,
         params,
       );
-    } else {
-      subscription = await this.stripeService.getSubscriptionById(
-        contract.stripeSubscriptionId,
-      );
     }
 
-    // retry to pay subscription invoice
-    if (updateContractDto.pay) {
-      if (typeof subscription.latest_invoice === 'string') {
-        await this.stripeService.payInvoiceById(subscription.latest_invoice);
-      } else {
-        await this.stripeService.payInvoiceById(subscription.latest_invoice.id);
+    if (items) {
+      const itemsToBeCreated = items.map((createItemDto) => {
+        return this.itemsService.createItem(
+          createItemDto.type,
+          contract.student,
+        );
+      });
+
+      const oldItems = await this.itemsService.getItems(
+        { contractId: contract.id },
+        user,
+      );
+
+      const queryRunner = this.connection.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        const createdItems = await queryRunner.manager.save(itemsToBeCreated);
+        const params: Stripe.SubscriptionUpdateParams = {
+          items:
+            this.itemsService.getStripeSubscriptionCreateParamsItems(
+              createdItems,
+            ),
+        };
+
+        const subscription = await this.stripeService.updateSubscriptionById(
+          contract.stripeSubscriptionId,
+          params,
+        );
+
+        // update old items status to detached
+        const savedDetachedItems = await Promise.all(
+          oldItems.map(async (item) => {
+            item.status = ItemStatus.DETACHED;
+            return await queryRunner.manager.save(item);
+          }),
+        );
+
+        // updateContractProps
+        const updatedContractFromStripe =
+          this.updateContractPropsFromStripeSubscription(
+            contract,
+            subscription,
+          );
+        const savedContractFromStripe = await queryRunner.manager.save(
+          updatedContractFromStripe,
+        );
+
+        // saving items
+        const { items: stripeItems } = subscription;
+        const itemsWithContract = createdItems.map((item) => {
+          item.contract = savedContractFromStripe;
+          return item;
+        });
+        const itemsWithStripeInfo =
+          this.itemsService.getUpdatedItemsFromStripeItems(
+            itemsWithContract,
+            stripeItems,
+          );
+        const savedItemsWithStripeInfo = await queryRunner.manager.save(
+          itemsWithStripeInfo,
+        );
+
+        // update contract.items
+        contract.items = [...savedDetachedItems, ...savedItemsWithStripeInfo];
+        await queryRunner.manager.save(contract);
+
+        await queryRunner.commitTransaction();
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        console.log(error);
+        throw new InternalServerErrorException();
+      } finally {
+        await queryRunner.release();
+      }
+    }
+
+    const subscription = await this.stripeService.getSubscriptionById(
+      contract.stripeSubscriptionId,
+    );
+
+    if (
+      subscription.status !== 'active' &&
+      subscription.status !== 'trialing'
+    ) {
+      try {
+        if (typeof subscription.latest_invoice === 'string') {
+          await this.stripeService.payInvoiceById(subscription.latest_invoice);
+        } else {
+          await this.stripeService.payInvoiceById(
+            subscription.latest_invoice.id,
+          );
+        }
+      } catch (error) {
+        console.log(error);
       }
     }
   }
 
-  async cancelContractById(contractId: string, user: User) {
-    const found = await this.getContractById(contractId, user);
-    let deletedSubscription;
+  async cancelContractById(contractId: string, user?: User) {
+    const contract = await this.getContractById(contractId, user);
+    let deletedSubscription: Stripe.Response<Stripe.Subscription>;
+
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
       deletedSubscription = await this.stripeService.cancelSubscriptionById(
-        found.stripeSubscriptionId,
+        contract.stripeSubscriptionId,
       );
+      if (deletedSubscription.status !== 'canceled') {
+        throw new InternalServerErrorException(
+          `Contract with ID "${contractId} couldn't be canceled becauseof Stripe ServerError"`,
+        );
+      }
+      contract.status = ContractStatus.CANCELED;
+      await queryRunner.manager.save(contract);
+
+      await queryRunner.commitTransaction();
     } catch (error) {
+      console.log(error);
+      await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(
         `Contract with ID "${contractId} couldn't be canceled"`,
       );
+    } finally {
+      queryRunner.release();
     }
-    if (deletedSubscription.status !== 'canceled') {
-      throw new InternalServerErrorException(
-        `Contract with ID "${contractId} couldn't be canceled"`,
-      );
-    }
-    found.status = ContractStatus.CANCELED;
-    await this.contractsRepository.save(found);
+  }
+
+  async getItemsByContractId(contractId: string, user?: User) {
+    return this.itemsService.getItems({ contractId }, user);
+  }
+
+  async getPaymentsByContractId(contractId: string, user?: User) {
+    return this.paymentsService.getPayments({ contractId }, user);
   }
 
   async updateContractFromStripeSubscription(
@@ -315,12 +433,12 @@ export class ContractsService {
     await this.contractsRepository.save(contract);
   }
 
-  async checkCanceledContractByStripeSubscriptionId(
-    stripeSubscriptionId: string,
+  async checkCanceledContractByStripeSubscription(
+    stripeSubscription: Stripe.Subscription,
   ) {
     const found =
       await this.contractsRepository.getContractByStripeSubscriptionId(
-        stripeSubscriptionId,
+        stripeSubscription.id,
       );
     if (found.status !== ContractStatus.CANCELED) {
       console.error(
@@ -353,8 +471,7 @@ export class ContractsService {
   }
 
   async updateUserPermissionsFromContracts(user: User) {
-    const customer = await this.customersRepository.findOne({ user });
-    const contracts = await this.contractsRepository.find({ customer });
+    const contracts = await this.getContracts(null, user);
     const permissions: Permission[] = [];
     for (const contract of contracts) {
       if (
@@ -375,6 +492,20 @@ export class ContractsService {
   }
 
   // helper functions
+
+  updateContractPropsFromStripeSubscription(
+    contract: Contract,
+    subscription: Stripe.Response<Stripe.Subscription>,
+  ) {
+    const { id, status, current_period_start, current_period_end } =
+      subscription;
+    contract.stripeSubscriptionId = id;
+    contract.lastPaymentTime = new Date(current_period_start * 1000);
+    contract.nextPaymentTime = new Date(current_period_end * 1000);
+    contract.status =
+      this.getContractStatusFromStripeSubscriptionStatus(status);
+    return contract;
+  }
 
   getUserPermissionsFromItemType(item: ItemType) {
     switch (item) {

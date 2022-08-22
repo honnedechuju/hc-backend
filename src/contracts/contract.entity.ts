@@ -45,7 +45,7 @@ export class Contract {
   @Column({ nullable: true })
   stripeSubscriptionId?: string;
 
-  @OneToMany(() => Item, (item) => item.contract, { eager: true })
+  @OneToMany(() => Item, (item) => item.contract)
   items: Item[];
 
   @OneToMany(() => Payment, (payment) => payment.contract)

@@ -34,10 +34,7 @@ export class AuthService {
 
     if (user && (await compare(password, user.password))) {
       const payload: JwtPayload = {
-        id: user.id,
         username,
-        role: user.role,
-        permissions: user.permissions,
       };
       const accessToken: string = this.jwtService.sign(payload);
       return {

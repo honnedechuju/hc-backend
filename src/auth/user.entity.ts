@@ -1,11 +1,13 @@
 import { Exclude } from 'class-transformer';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Customer } from '../customers/customer.entity';
 import { Role } from './role.enum';
@@ -19,13 +21,20 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt: Date;
+
   @Column({ unique: true })
   username: string;
 
   @Column()
+  @Exclude({ toPlainOnly: true })
   password: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column({ nullable: true })

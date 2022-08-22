@@ -92,10 +92,23 @@ export class CustomersService {
     }
   }
 
-  async getCustomerById(id: string): Promise<Customer> {
-    const found = await this.customersRepository.findOne({ id });
+  async getCustomerById(id: string, user?: User): Promise<Customer> {
+    const found = await this.customersRepository.findOne({ id, user });
     if (!found) {
       throw new NotFoundException(`Customer with ID "${id}" not found`);
+    }
+    return found;
+  }
+
+  async getCustomerByStripeCustomerId(stripeCustomerId: string, user?: User) {
+    const found = await this.customersRepository.findOne({
+      stripeCustomerId,
+      user,
+    });
+    if (!found) {
+      throw new NotFoundException(
+        `Customer with stripe customer ID "${stripeCustomerId}" not found`,
+      );
     }
     return found;
   }
@@ -135,9 +148,11 @@ export class CustomersService {
 
   async getPaymentMethods(customerId: string) {
     const customer = await this.getCustomerById(customerId);
-    return this.stripeService.getPaymentMethodsByCustomerId(
-      customer.stripeCustomerId,
-    );
+    return (
+      await this.stripeService.getPaymentMethodsByCustomerId(
+        customer.stripeCustomerId,
+      )
+    ).data;
   }
 
   async postPaymentMethod(
@@ -146,7 +161,7 @@ export class CustomersService {
   ) {
     const { stripePaymentMethodId } = createPaymentMethodDto;
     const customer = await this.getCustomerById(customerId);
-    return this.stripeService.attachPaymentMethodToCustomer(
+    await this.stripeService.attachPaymentMethodToCustomer(
       stripePaymentMethodId,
       customer.stripeCustomerId,
     );

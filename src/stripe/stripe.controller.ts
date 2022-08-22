@@ -6,9 +6,14 @@ import { StripeService } from './stripe.service';
 export class StripeController {
   constructor(private stripeService: StripeService) {}
 
-  @Get('payment-method')
-  async createPaymentMethod() {
-    return this.stripeService.createPaymentMethod();
+  @Get('payment-method-success')
+  async createPaymentMethodForSuccess() {
+    return this.stripeService.createPaymentMethodForSuccess();
+  }
+
+  @Get('payment-method-failure')
+  createPaymentMethodForFailure() {
+    return this.stripeService.createPaymentMethodForFailure();
   }
 
   @Post('webhook')

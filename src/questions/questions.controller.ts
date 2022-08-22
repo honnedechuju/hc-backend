@@ -16,7 +16,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/user.entity';
 import { CreateQuestionDto } from './dto/create-question.dto';
-import { GetQuestionsFilterDto } from './dto/get-questions-fliter.dto';
+import { GetQuestionsFilterDto } from './dto/get-questions-filter.dto';
 import { UpdateQuestionStatusDto } from './dto/update-question-status.dto';
 import { Question } from './question.entity';
 import { QuestionsService } from './questions.service';

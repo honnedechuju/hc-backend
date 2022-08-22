@@ -1,11 +1,13 @@
 import { Question } from '../questions/question.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../auth/user.entity';
 import { Contract } from '../contracts/contract.entity';
@@ -16,6 +18,12 @@ import { Student } from '../students/student.entity';
 export class Customer {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt: Date;
 
   @Column()
   firstName: string;

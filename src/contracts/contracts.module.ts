@@ -14,6 +14,7 @@ import { UsersRepository } from '../auth/users.repository';
 import { ItemsModule } from './item/items.module';
 import { ItemsRepository } from './item/items.repository';
 import { CustomersModule } from '../customers/customers.module';
+import { PaymentsModule } from 'src/payments/payments.module';
 
 @Module({
   providers: [ConfigService, ContractsService],
@@ -22,15 +23,15 @@ import { CustomersModule } from '../customers/customers.module';
     TypeOrmModule.forFeature([
       ContractsRepository,
       UsersRepository,
-      CustomersRepository,
       ItemsRepository,
       PaymentsRepository,
     ]),
     AuthModule,
-    StudentsModule,
-    ItemsModule,
+    forwardRef(() => StudentsModule),
     forwardRef(() => CustomersModule),
     forwardRef(() => StripeModule),
+    forwardRef(() => ItemsModule),
+    PaymentsModule,
   ],
   exports: [ContractsService],
 })

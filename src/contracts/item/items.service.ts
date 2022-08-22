@@ -1,20 +1,47 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Student } from '../../students/student.entity';
 import Stripe from 'stripe';
+
+import { Student } from '../../students/student.entity';
 import { Contract } from '../contract.entity';
 import { ItemType } from './item-type.enum';
 import { Item } from './item.entity';
 import { ItemsRepository } from './items.repository';
+import { GetItemsFilterDto } from './dto/get-items-filter.dto';
+import { User } from '../../auth/user.entity';
+import { ContractsService } from '../contracts.service';
+import { StudentsService } from '../../students/students.service';
 
 @Injectable()
 export class ItemsService {
   constructor(
-    private configService: ConfigService,
     @InjectRepository(ItemsRepository)
     private itemsRepository: ItemsRepository,
+
+    private configService: ConfigService,
+    @Inject(forwardRef(() => StudentsService))
+    private studentsService: StudentsService,
+    @Inject(forwardRef(() => ContractsService))
+    private contractsService: ContractsService,
   ) {}
+
+  async getItems(filterDto: GetItemsFilterDto, user?: User) {
+    const { studentId, contractId } = filterDto;
+    let student: Student, contract: Contract;
+    if (studentId) {
+      student = await this.studentsService.getStudentById(studentId, user);
+    }
+    if (contractId) {
+      contract = await this.contractsService.getContractById(contractId, user);
+    }
+    return this.itemsRepository.getItems(filterDto, student, contract);
+  }
 
   createItem(type: ItemType, student?: Student, contract?: Contract) {
     let item: Item;
@@ -72,8 +99,9 @@ export class ItemsService {
       (item): Stripe.SubscriptionCreateParams.Item => ({
         price: this.configService.get(`STRIPE_PRICE_ID_${item.type}`),
         metadata: {
-          student_id: item.student.id,
-          item_id: item.id,
+          student_id: item?.student?.id,
+          contract_id: item?.contract?.id,
+          item_id: item?.id,
         },
       }),
     );

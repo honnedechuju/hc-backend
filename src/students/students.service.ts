@@ -1,15 +1,20 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
+  NotAcceptableException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Role } from '../auth/role.enum';
+import { ItemsService } from 'src/contracts/item/items.service';
+import { Customer } from 'src/customers/customer.entity';
+import { CustomersService } from 'src/customers/customers.service';
 import { User } from '../auth/user.entity';
-import { CustomersRepository } from '../customers/customers.repository';
 import { CreateStudentDto } from './dto/create-student.dto';
+import { GetStudentsFilterDto } from './dto/get-students-filter.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { Student } from './student.entity';
 import { StudentsRepository } from './students.repository';
@@ -17,51 +22,58 @@ import { StudentsRepository } from './students.repository';
 @Injectable()
 export class StudentsService {
   constructor(
-    @InjectRepository(CustomersRepository)
-    private customersRepository: CustomersRepository,
     @InjectRepository(StudentsRepository)
     private studentsRepository: StudentsRepository,
-    private jwtService: JwtService,
+    @Inject(forwardRef(() => CustomersService))
+    private customersService: CustomersService,
+    @Inject(forwardRef(() => ItemsService))
+    private itemsService: ItemsService,
   ) {}
 
-  async getStudents(user: User): Promise<Student[]> {
-    const customer = await this.customersRepository.findOne({ user });
-    if (!customer) {
-      throw new BadRequestException(`You must be registered Customer`);
-    }
-    if (user.role === Role.ADMIN) {
-      return this.studentsRepository.find();
-    }
-    return this.studentsRepository.find({ customer });
+  async getStudents(
+    filterDto: GetStudentsFilterDto,
+    user?: User,
+  ): Promise<Student[]> {
+    return this.studentsRepository.getStudents(filterDto, user);
   }
 
   async createStudent(
-    createCustomerDto: CreateStudentDto,
-    user: User,
+    createStudentDto: CreateStudentDto,
+    user?: User,
   ): Promise<void> {
-    const customer = await this.customersRepository.findOne({ user });
-    if (!customer) {
-      throw new BadRequestException(`You must be registered Customer`);
+    let customer: Customer;
+    if (!user) {
+      if (!createStudentDto?.customerId) {
+        throw new NotAcceptableException();
+      } else {
+        customer = await this.customersService.getCustomerById(
+          createStudentDto.customerId,
+        );
+      }
+    } else {
+      customer = user.customer;
     }
+    if (!customer) {
+      throw new NotFoundException(`Customer not found`);
+    }
+    delete createStudentDto?.customerId;
     try {
-      await this.studentsRepository.createStudent(createCustomerDto, customer);
+      await this.studentsRepository.createStudent(createStudentDto, customer);
     } catch (error) {
       throw new InternalServerErrorException();
     }
   }
 
-  async getStudentById(id: string, user: User): Promise<Student> {
-    const customer = await this.customersRepository.findOne({ user });
-    if (!customer) {
-      throw new BadRequestException(`You must be registered Customer`);
-    }
+  async getStudentById(id: string, user?: User): Promise<Student> {
     const found = await this.studentsRepository.findOne({
       id,
-      customer,
     });
-
     if (!found) {
       throw new NotFoundException(`Customer with ID "${id}" not found`);
+    }
+
+    if (user && user.customer.id !== found.customer.id) {
+      throw new UnauthorizedException();
     }
 
     return found;
@@ -69,23 +81,19 @@ export class StudentsService {
 
   async updateStudentById(
     id: string,
-    updateStudentByDto: UpdateStudentDto,
-    user: User,
+    updateStudentDto: UpdateStudentDto,
+    user?: User,
   ): Promise<void> {
-    const found = await this.getStudentById(id, user);
-    const student: Student = this.studentsRepository.create({
-      ...found,
-      ...updateStudentByDto,
-    });
+    await this.getStudentById(id, user);
     try {
-      await this.studentsRepository.save(student);
+      await this.studentsRepository.update(id, updateStudentDto);
     } catch (error) {
       throw new InternalServerErrorException();
     }
   }
 
   async checkCustomerStudents(studentIds: string[], user: User) {
-    const correctStudentIds = (await this.getStudents(user)).map(
+    const correctStudentIds = (await this.getStudents(null, user)).map(
       (student) => student.id,
     );
     const result = studentIds.filter(
@@ -94,9 +102,5 @@ export class StudentsService {
     if (result.length > 0) {
       throw new NotFoundException(`Student ID with "${result}" not found`);
     }
-  }
-
-  async getJwtTokenByStudentId(studentId: string, user: User) {
-    return this.jwtService.sign({ username: user.username, studentId });
   }
 }

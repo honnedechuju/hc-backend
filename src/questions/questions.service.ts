@@ -10,7 +10,7 @@ import { Message } from '@line/bot-sdk';
 
 import { QuestionStatus } from './question-status.enum';
 import { CreateQuestionDto } from './dto/create-question.dto';
-import { GetQuestionsFilterDto } from './dto/get-questions-fliter.dto';
+import { GetQuestionsFilterDto } from './dto/get-questions-filter.dto';
 import { QuestionsRepository } from './questions.repository';
 import { Question } from './question.entity';
 import { User } from '../auth/user.entity';

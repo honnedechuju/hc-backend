@@ -13,6 +13,8 @@ import { Item } from '../contracts/item/item.entity';
 import { Customer } from '../customers/customer.entity';
 import { OSSR } from 'src/ossrs/ossr.entity';
 import { StudentService } from './student-service.enum';
+import { Exclude } from 'class-transformer';
+import { Payment } from 'src/payments/payment.entity';
 @Entity()
 export class Student {
   @PrimaryGeneratedColumn('uuid')
@@ -37,10 +39,10 @@ export class Student {
   birthday: Date;
 
   @Column()
-  privateSchool: string;
+  school: string;
 
   @Column()
-  publicSchool: string;
+  juku: string;
 
   @Column({
     type: 'enum',
@@ -65,9 +67,15 @@ export class Student {
   @ManyToMany(() => OSSR, (ossr) => ossr.students, { eager: false })
   ossrs: OSSR[];
 
+  @OneToMany(() => Payment, (payment) => payment.student)
+  payments: Payment[];
+
   @OneToMany(() => Contract, (contract) => contract.student, { eager: false })
   contracts: Contract[];
 
-  @ManyToOne(() => Customer, (customer) => customer.students, { eager: true })
+  @ManyToOne(() => Customer, (customer) => customer.students, {
+    eager: true,
+  })
+  @Exclude({ toPlainOnly: true })
   customer: Customer;
 }

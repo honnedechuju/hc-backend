@@ -9,6 +9,7 @@ import { StudentsRepository } from '../students/students.repository';
 import { PaymentsModule } from '../payments/payments.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { ContractsModule } from 'src/contracts/contracts.module';
+import { StudentsModule } from 'src/students/students.module';
 
 @Module({
   providers: [CustomersService],
@@ -20,9 +21,10 @@ import { ContractsModule } from 'src/contracts/contracts.module';
       StudentsRepository,
     ]),
     AuthModule,
-    PaymentsModule,
+    forwardRef(() => PaymentsModule),
     forwardRef(() => ContractsModule),
     forwardRef(() => StripeModule),
+    forwardRef(() => StudentsModule),
   ],
   exports: [CustomersService],
 })

@@ -21,6 +21,7 @@ async function bootstrap() {
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
   app.useGlobalInterceptors(new TransformInterceptor());
+  app.enableCors();
   const port = 3000;
   await app.listen(port);
   logger.log(`Application listening on port ${port}`);

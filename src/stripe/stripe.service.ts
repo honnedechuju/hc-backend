@@ -37,13 +37,25 @@ export class StripeService {
     });
   }
 
-  async createPaymentMethod() {
+  async createPaymentMethodForSuccess() {
     return this.stripe.paymentMethods.create({
       type: 'card',
       card: {
         exp_month: 12,
         exp_year: 2024,
         number: '4242424242424242',
+        cvc: '333',
+      },
+    });
+  }
+
+  async createPaymentMethodForFailure() {
+    return this.stripe.paymentMethods.create({
+      type: 'card',
+      card: {
+        exp_month: 12,
+        exp_year: 2024,
+        number: '4000000000000002',
         cvc: '333',
       },
     });
@@ -182,8 +194,8 @@ export class StripeService {
 
       case 'customer.subscription.deleted':
         const deletedSubscription = event.data.object as Stripe.Subscription;
-        await this.contractsService.checkCanceledContractByStripeSubscriptionId(
-          deletedSubscription.id,
+        await this.contractsService.checkCanceledContractByStripeSubscription(
+          deletedSubscription,
         );
     }
   }

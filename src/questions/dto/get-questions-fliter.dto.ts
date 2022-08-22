@@ -9,8 +9,4 @@ export class GetQuestionsFilterDto {
   @IsOptional()
   @IsString()
   search?: string;
-
-  @IsOptional()
-  @IsString()
-  studentId?: string;
 }

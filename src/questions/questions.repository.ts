@@ -1,7 +1,7 @@
 import { User } from '../auth/user.entity';
 import { EntityRepository, Repository } from 'typeorm';
 import { CreateQuestionDto } from './dto/create-question.dto';
-import { GetQuestionsFilterDto } from './dto/get-questions-fliter.dto';
+import { GetQuestionsFilterDto } from './dto/get-questions-filter.dto';
 import { Question } from './question.entity';
 import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { Customer } from '../customers/customer.entity';
@@ -10,7 +10,7 @@ import { Image } from '../images/image.entity';
 
 @EntityRepository(Question)
 export class QuestionsRepository extends Repository<Question> {
-  private logger = new Logger('TasksRepository', { timestamp: true });
+  private logger = new Logger(QuestionsRepository.name, { timestamp: true });
 
   async getQuestions(
     filterDto: GetQuestionsFilterDto,

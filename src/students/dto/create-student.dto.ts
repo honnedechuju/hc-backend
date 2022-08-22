@@ -1,7 +1,11 @@
 import { Type } from 'class-transformer';
-import { IsDate, IsInt, IsString } from 'class-validator';
+import { IsDate, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class CreateStudentDto {
+  @IsOptional()
+  @IsString()
+  customerId: string;
+
   @IsString()
   firstName: string;
 
@@ -23,8 +27,8 @@ export class CreateStudentDto {
   birthday: Date;
 
   @IsString()
-  privateSchool: string;
+  school: string;
 
   @IsString()
-  publicSchool: string;
+  juku: string;
 }

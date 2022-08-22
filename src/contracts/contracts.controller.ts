@@ -21,6 +21,8 @@ import { ContractsService } from './contracts.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
 import { GetContractsFilterDto } from './dto/get-contracts-filter.dto';
+import { Item } from './item/item.entity';
+import { Payment } from 'src/payments/payment.entity';
 
 @Controller('contracts')
 @UseGuards(AuthGuard())
@@ -62,7 +64,13 @@ export class ContractsController {
     @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<Contract> {
-    return this.contractsService.getContractById(id, user);
+    if (user.role === Role.CUSTOMER) {
+      return this.contractsService.getContractById(id, user);
+    } else if (user.role === Role.ADMIN) {
+      return this.contractsService.getContractById(id);
+    } else {
+      throw new BadRequestException();
+    }
   }
 
   @Patch(':id')
@@ -83,6 +91,40 @@ export class ContractsController {
     @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<void> {
-    return this.contractsService.cancelContractById(id, user);
+    if (user.role === Role.CUSTOMER) {
+      await this.contractsService.cancelContractById(id, user);
+    } else if (user.role === Role.ADMIN) {
+      await this.contractsService.cancelContractById(id);
+    } else {
+      throw new BadRequestException();
+    }
+  }
+
+  @Get(':id/items')
+  async getItemsByContractId(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<Item[]> {
+    if (user.role === Role.CUSTOMER) {
+      return this.contractsService.getItemsByContractId(id, user);
+    } else if (user.role === Role.ADMIN) {
+      return this.contractsService.getItemsByContractId(id);
+    } else {
+      throw new BadRequestException();
+    }
+  }
+
+  @Get(':id/payments')
+  async getPaymentsByContractId(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<Payment[]> {
+    if (user.role === Role.CUSTOMER) {
+      return this.contractsService.getPaymentsByContractId(id, user);
+    } else if (user.role === Role.ADMIN) {
+      return this.contractsService.getPaymentsByContractId(id);
+    } else {
+      throw new BadRequestException();
+    }
   }
 }

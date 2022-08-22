@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -17,6 +18,7 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { Student } from './student.entity';
 import { StudentsService } from './students.service';
+import { GetStudentsFilterDto } from './dto/get-students-filter.dto';
 
 @Controller('students')
 @UseGuards(AuthGuard())
@@ -25,49 +27,64 @@ export class StudentsController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN, Role.CUSTOMER])
-  async getStudent(@GetUser() user: User): Promise<Student[]> {
-    return this.studentsService.getStudents(user);
+  @Roles([Role.CUSTOMER, Role.ADMIN])
+  async getStudent(
+    @GetUser() user: User,
+    @Body() filterDto: GetStudentsFilterDto,
+  ): Promise<Student[]> {
+    if (user.role === Role.CUSTOMER) {
+      return this.studentsService.getStudents(filterDto, user);
+    } else if (user.role === Role.ADMIN) {
+      return this.studentsService.getStudents(filterDto);
+    } else {
+      throw new BadRequestException(`No permission`);
+    }
   }
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN, Role.CUSTOMER])
+  @Roles([Role.CUSTOMER, Role.ADMIN])
   async createStudent(
     @Body() createStudentDto: CreateStudentDto,
     @GetUser() user: User,
   ): Promise<void> {
-    await this.studentsService.createStudent(createStudentDto, user);
+    if (user.role === Role.CUSTOMER) {
+      await this.studentsService.createStudent(createStudentDto, user);
+    } else if (user.role === Role.ADMIN) {
+      await this.studentsService.createStudent(createStudentDto);
+    } else {
+      throw new BadRequestException(`No permission`);
+    }
   }
 
-  @Get('/:studentId/')
+  @Get('/:id/')
   @UseGuards(RolesGuard)
   @Roles([Role.ADMIN, Role.CUSTOMER])
   async getStudentById(
-    @Param('studentId') id: string,
+    @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<Student> {
-    return this.studentsService.getStudentById(id, user);
+    if (user.role === Role.CUSTOMER) {
+      return this.studentsService.getStudentById(id, user);
+    } else if (user.role === Role.ADMIN) {
+      return this.studentsService.getStudentById(id);
+    } else {
+      throw new BadRequestException(`No permission`);
+    }
   }
 
-  @Patch('/:studentId/')
+  @Patch('/:id/')
   @UseGuards(RolesGuard)
   @Roles([Role.ADMIN, Role.CUSTOMER])
   async updateStudentById(
-    @Param('studentId') id: string,
+    @Param('id') id: string,
     @Body() updateStudentDto: UpdateStudentDto,
     @GetUser() user: User,
   ): Promise<void> {
-    await this.studentsService.updateStudentById(id, updateStudentDto, user);
-  }
-
-  @Get('/:studentId/signIn')
-  @UseGuards(RolesGuard)
-  @Roles([Role.ADMIN, Role.CUSTOMER])
-  async signInStudentById(
-    @Param('studentId') studentId: string,
-    @GetUser() user: User,
-  ) {
-    return this.studentsService.getJwtTokenByStudentId(studentId, user);
+    if (user.role === Role.CUSTOMER) {
+      await this.studentsService.updateStudentById(id, updateStudentDto, user);
+    } else if (user.role === Role.ADMIN) {
+      await this.studentsService.updateStudentById(id, updateStudentDto);
+    }
   }
 }

@@ -12,7 +12,7 @@ import { GetUser } from '../auth/get-user.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../auth/role.enum';
 import { User } from '../auth/user.entity';
-import { GetTasksFilterDto } from './dto/get-tasks-fliter.dto';
+import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './task.entity';
 import { TasksService } from './tasks.service';
