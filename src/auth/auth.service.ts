@@ -1,11 +1,13 @@
 import {
+  ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { compare } from 'bcrypt';
+import { compare, genSalt, hash } from 'bcrypt';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -23,7 +25,27 @@ export class AuthService {
   ) {}
 
   async signUp(createUserDto: CreateUserDto): Promise<void> {
-    this.usersRepository.createUser(createUserDto);
+    const { username, password, email } = createUserDto;
+
+    const salt = await genSalt();
+    const hashedPassword = await hash(password, salt);
+
+    const user = this.usersRepository.create({
+      username,
+      password: hashedPassword,
+      email,
+      lineUserId: '',
+    });
+
+    try {
+      await this.usersRepository.save(user);
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException('Username already exists');
+      } else {
+        throw new InternalServerErrorException();
+      }
+    }
   }
 
   async signIn(authCredentialsDto: AuthCredentialsDto): Promise<{

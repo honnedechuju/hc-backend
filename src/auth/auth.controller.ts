@@ -1,28 +1,20 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUser } from './get-user.decorator';
-import { Roles } from './roles.decorator';
-import { RolesGuard } from './roles.guard';
-import { Role } from './role.enum';
 import { User } from './user.entity';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Get()
+  @UseGuards(AuthGuard())
+  async getUser(@GetUser() user: User): Promise<User> {
+    return user;
+  }
 
   @Post('signup')
   async signUp(@Body() createUserDto: CreateUserDto): Promise<void> {
